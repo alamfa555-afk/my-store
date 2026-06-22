@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ajanta Construction — Inventory</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0f1e;color:#e2e8f0;min-height:100vh}
+.topbar{background:#0d1b3e;border-bottom:1px solid #1e3a8a;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:46px;height:46px;background:#1e3a8a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#f97316;border:2px solid #f97316}
+.brand-text h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:1px}
+.brand-text p{font-size:9px;color:#93c5fd;letter-spacing:2px;margin-top:2px}
+.live{display:flex;align-items:center;gap:5px;font-size:11px;color:#4ade80;font-weight:600}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.nav{background:#080e1e;border-bottom:1px solid #1e3a8a;padding:0 16px;display:flex;gap:2px;overflow-x:auto;position:sticky;top:70px;z-index:99}
+.nb{padding:10px 14px;background:none;border:none;border-bottom:2px solid transparent;color:#64748b;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;letter-spacing:.5px;transition:.2s}
+.nb.on{color:#63b3ed;border-bottom-color:#63b3ed}
+.nb:hover{color:#93c5fd}
+.pg{display:none;padding:16px}
+.pg.on{display:block}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.sc{background:#0d1b3e;border:1px solid #1e3a8a;border-radius:12px;padding:14px;cursor:pointer;transition:.2s}
+.sc:hover{border-color:#3b82f6;transform:translateY(-2px)}
+.sc.red{border-color:#7f1d1d;background:#1a0808}
+.sc.yel{border-color:#92400e;background:#1a1208}
+.sc.grn{border-color:#065f46;background:#081a10}
+.sv{font-size:24px;font-weight:700;color:#fff}
+.sl{font-size:10px;color:#64748b;margin-top:3px;letter-spacing:.5px;text-transform:uppercase}
+.alerts{margin-bottom:12px}
+.al{padding:8px 12px;border-radius:8px;font-size:11px;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.al.r{background:#3b0f0f;border:1px solid #7f1d1d;color:#fca5a5}
+.al.y{background:#3b2000;border:1px solid #92400e;color:#fde68a}
+.al.g{background:#0a2e1a;border:1px solid #065f46;color:#4ade80}
+.card{background:#0d1b3e;border:1px solid #1e3a8a;border-radius:14px;padding:16px;margin-bottom:14px}
+.ct{font-size:12px;font-weight:700;color:#63b3ed;margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
+.fl{display:flex;flex-direction:column;gap:4px}
+.fl label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.fl input,.fl select{background:#080e1e;border:1px solid #1e3a8a;border-radius:7px;padding:8px 10px;color:#e2e8f0;font-size:13px;outline:none;width:100%}
+.fl input:focus,.fl select:focus{border-color:#3b82f6}
+.fl select option{background:#080e1e}
+.br{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;transition:.2s}
+.bp{background:#1d4ed8;color:#fff}.bp:hover{background:#1e40af}
+.bs{background:#065f46;color:#fff}.bs:hover{background:#064e3b}
+.bd{background:#991b1b;color:#fff}.bd:hover{background:#7f1d1d}
+.bo{background:#c2410c;color:#fff}.bo:hover{background:#9a3412}
+.bv{background:#6d28d9;color:#fff}.bv:hover{background:#5b21b6}
+.bsm{padding:6px 12px;font-size:11px}
+.tw{overflow-x:auto;border-radius:10px;border:1px solid #1e3a8a}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:700px}
+thead{background:#0a1628}
+th{padding:9px 8px;text-align:left;color:#93c5fd;font-weight:700;letter-spacing:.5px;white-space:nowrap;font-size:10px;text-transform:uppercase}
+td{padding:8px 8px;border-top:1px solid #0f2040;color:#cbd5e1;white-space:nowrap}
+tr:hover td{background:#0f2040}
+.bk{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.bk-ok{background:#0a2e1a;color:#4ade80;border:1px solid #065f46}
+.bk-lw{background:#3b2000;color:#fde68a;border:1px solid #92400e}
+.bk-no{background:#3b0f0f;color:#fca5a5;border:1px solid #7f1d1d}
+.bk-dm{background:#2e1065;color:#d8b4fe;border:1px solid #6d28d9}
+.ir{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.ir select,.ir input{background:#080e1e;border:1px solid #1e3a8a;border-radius:7px;padding:7px 9px;color:#e2e8f0;font-size:12px;outline:none}
+.ir select{flex:2;min-width:180px}
+.ir input{width:90px}
+.msg{font-size:11px;margin-top:8px;min-height:16px;font-weight:600;padding:4px 0}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">A</div>
+    <div class="brand-text">
+      <h1>AJANTA CONSTRUCTION COMPANY</h1>
+      <p>STORE INVENTORY MANAGEMENT SYSTEM</p>
+    </div>
+  </div>
+  <div class="live"><div class="live-dot"></div>LIVE</div>
+</div>
+<div class="nav">
+  <button class="nb on" onclick="goTo('dash',0)">&#9632; Dashboard</button>
+  <button class="nb" onclick="goTo('prod',1)">&#9632; Product Entry</button>
+  <button class="nb" onclick="goTo('issue',2)">&#9632; Issue Items</button>
+  <button class="nb" onclick="goTo('stock',3)">&#9632; Stock View</button>
+  <button class="nb" onclick="goTo('rpt',4)">&#9632; Reports</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="pg-dash" class="pg on">
+  <div class="grid4" id="stat-grid"></div>
+  <div class="alerts" id="alert-box"></div>
+  <div class="card">
+    <div class="ct">&#9670; Recent Products</div>
+    <div class="tw"><table>
+      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Qty</th><th>Receiver ID</th><th>Supplier</th><th>Status</th></tr></thead>
+      <tbody id="dash-tb"><tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- PRODUCT ENTRY -->
+<div id="pg-prod" class="pg">
+  <div class="card">
+    <div class="ct">&#9670; Add / Edit Product</div>
+    <input type="hidden" id="edit-id">
+    <div class="fg">
+      <div class="fl"><label>Item Code *</label><input id="f-code" placeholder="e.g. ITM-001"></div>
+      <div class="fl"><label>Invoice No</label><input id="f-invoice" placeholder="e.g. INV-2024-001"></div>
+      <div class="fl"><label>Description *</label><input id="f-desc" placeholder="Product description"></div>
+      <div class="fl"><label>Unit *</label>
+        <select id="f-unit">
+          <option value="">-- Select Unit --</option>
+          <option>Pcs</option><option>No.</option><option>Ltr</option>
+          <option>Mtr</option><option>Roll</option><option>Box</option>
+          <option>Sheet</option><option>Other</option>
+        </select>
+      </div>
+      <div class="fl"><label>Price / Unit (SAR)</label><input id="f-price" type="number" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="fl"><label>Quantity</label><input id="f-qty" type="number" placeholder="0" min="0"></div>
+      <div class="fl"><label>Location</label><input id="f-loc" placeholder="Warehouse / Shelf / Room"></div>
+      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company name"></div>
+      <div class="fl"><label>Last Purchase Date</label><input id="f-date" type="date"></div>
+      <div class="fl"><label>Receiver ID</label><input id="f-receiver" placeholder="e.g. EMP-001 or Name"></div>
+      <div class="fl"><label>Status</label>
+        <select id="f-status">
+          <option value="ok">OK</option>
+          <option value="damage">Damage</option>
+          <option value="reject">Reject</option>
+          <option value="expiry">Expiry</option>
+        </select>
+      </div>
+      <div class="fl"><label>Remark</label><input id="f-rem" placeholder="Any remarks"></div>
+    </div>
+    <div class="br">
+      <button class="btn bp" onclick="saveProduct()">&#10003; Save Product</button>
+      <button class="btn bd" onclick="clearProd()">&#10005; Clear Form</button>
+    </div>
+    <div class="msg" id="pmsg"></div>
+  </div>
+  <div class="card">
+    <div class="ct">&#9670; All Products</div>
+    <div class="tw"><table>
+      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Price/Unit</th><th>Qty</th><th>Location</th><th>Supplier</th><th>Receiver ID</th><th>Last Purchase</th><th>Status</th><th>Remark</th><th>Action</th></tr></thead>
+      <tbody id="prod-tb"><tr><td colspan="14" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ISSUE -->
+<div id="pg-issue" class="pg">
+  <div class="card">
+    <div class="ct">&#9670; Issue Items</div>
+    <div class="fg">
+      <div class="fl"><label>Issued To (Name) *</label><input id="i-to" placeholder="Person / Department name"></div>
+      <div class="fl"><label>Person ID</label><input id="i-pid" placeholder="e.g. EMP-001"></div>
+      <div class="fl"><label>Issued By (Name) *</label><input id="i-by" placeholder="Issuer full name"></div>
+      <div class="fl"><label>Issuer Title *</label>
+        <select id="i-title">
+          <option value="">-- Select Title --</option>
+          <option value="Store Keeper">Store Keeper</option>
+          <option value="Supervisor">Supervisor</option>
+          <option value="Incharge">Incharge</option>
+          <option value="Manager">Manager</option>
+          <option value="Assistant Manager">Assistant Manager</option>
+          <option value="General Manager">General Manager</option>
+          <option value="Director">Director</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="fl"><label>Issue Date</label><input id="i-date" type="date"></div>
+      <div class="fl"><label>Remark / Purpose</label><input id="i-rem" placeholder="Purpose of issue"></div>
+    </div>
+    <div class="ct" style="margin-top:4px">&#9670; Select Items to Issue</div>
+    <div id="ilist"></div>
+    <div class="br" style="margin-top:10px">
+      <button class="btn bs" onclick="addIRow()">+ Add Item Row</button>
+      <button class="btn bp" onclick="saveIssue()">&#10003; Issue & Update Stock</button>
+      <button class="btn bd" onclick="clearIssue()">&#10005; Clear</button>
+    </div>
+    <div class="msg" id="imsg"></div>
+  </div>
+  <div class="card">
+    <div class="ct">&#9670; Issue History</div>
+    <div class="tw"><table>
+      <thead><tr><th>S.No</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
+      <tbody id="iss-tb"><tr><td colspan="11" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- STOCK -->
+<div id="pg-stock" class="pg">
+  <div class="br" style="margin-bottom:12px">
+    <button class="btn bp bsm" onclick="renderStock('all')">All Stock</button>
+    <button class="btn bs bsm" onclick="renderStock('ok')">In Stock</button>
+    <button class="btn bo bsm" onclick="renderStock('low')">Low Stock</button>
+    <button class="btn bd bsm" onclick="renderStock('out')">No Stock</button>
+    <button class="btn bv bsm" onclick="renderStock('dmg')">Damage / Reject</button>
+  </div>
+  <div class="card">
+    <div class="ct" id="stock-title">&#9670; All Stock</div>
+    <div class="tw"><table>
+      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price/Unit</th><th>Total Value</th><th>Supplier</th><th>Receiver ID</th><th>Location</th><th>Status</th></tr></thead>
+      <tbody id="stk-tb"><tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div id="pg-rpt" class="pg">
+  <div class="card">
+    <div class="ct">&#9670; Generate PDF Reports</div>
+    <div class="br" style="margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn bv" onclick="makePDF('daily')">&#128196; Daily Report</button>
+      <button class="btn bv" onclick="makePDF('weekly')">&#128196; Weekly Report</button>
+      <button class="btn bv" onclick="makePDF('monthly')">&#128196; Monthly Report</button>
+      <button class="btn bv" onclick="makePDF('stock')">&#128196; Full Stock Report</button>
+      <button class="btn bv" onclick="makePDF('allissue')">&#128196; All Issue Report</button>
+      <button class="btn bv" onclick="makePDF('lowstock')">&#128196; Low Stock Alert</button>
+    </div>
+    <div class="fl" style="max-width:300px;margin-bottom:12px">
+      <label>Product-wise Report</label>
+      <select id="rpt-pid"><option value="">-- Select Product --</option></select>
+    </div>
+    <button class="btn bv" onclick="makeProdPDF()">&#128196; Product Report PDF</button>
+    <div class="msg" id="rmsg"></div>
+  </div>
+  <div class="card">
+    <div class="ct">&#9670; Issue Summary</div>
+    <div class="tw"><table>
+      <thead><tr><th>S.No</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th></tr></thead>
+      <tbody id="rpt-tb"><tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<script>
+const SURL='https://uxhtffhfudynqbazfzjg.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4aHRmZmhmdWR5bnFiYXpmempnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5OTEyMjksImV4cCI6MjA5NzU2NzIyOX0.Cz7yXki5C6i8UyHgt6pH0wjp6t-IJ_MbPkAr6tnp6mg';
+const sb=supabase.createClient(SURL,SKEY);
+let prods=[],issues=[];
+
+async function loadAll(){
+  try{
+    const r1=await sb.from('products').select('*').order('created_at',{ascending:false});
+    const r2=await sb.from('issue_items').select('*,issues(*),products(*)').order('created_at',{ascending:false});
+    if(r1.error)throw r1.error;
+    if(r2.error)throw r2.error;
+    prods=r1.data||[];issues=r2.data||[];
+    renderDash();renderProds();renderIssues();renderStock('all');renderRptTable();fillSelects();
+  }catch(e){console.error('Load error:',e);}
+}
+
+function goTo(id,idx){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  document.querySelectorAll('.nb')[idx].classList.add('on');
+}
+
+function badge(p){
+  if(p.quantity<=0)return '<span class="bk bk-no">NO STOCK</span>';
+  if(p.quantity<=10)return '<span class="bk bk-lw">LOW</span>';
+  if(['damage','reject','expiry'].includes(p.status))return '<span class="bk bk-dm">'+p.status.toUpperCase()+'</span>';
+  return '<span class="bk bk-ok">OK</span>';
+}
+
+function renderDash(){
+  const tot=prods.length,low=prods.filter(p=>p.quantity>0&&p.quantity<=10).length;
+  const out=prods.filter(p=>p.quantity<=0).length,ok=prods.filter(p=>p.quantity>10).length;
+  const dmg=prods.filter(p=>['damage','reject','expiry'].includes(p.status)).length;
+  document.getElementById('stat-grid').innerHTML=`
+    <div class="sc" onclick="goTo('prod',1)"><div class="sv">${tot}</div><div class="sl">Total Products</div></div>
+    <div class="sc grn" onclick="renderStock('ok');goTo('stock',3)"><div class="sv">${ok}</div><div class="sl">In Stock</div></div>
+    <div class="sc yel" onclick="renderStock('low');goTo('stock',3)"><div class="sv">${low}</div><div class="sl">Low Stock (&lt;10)</div></div>
+    <div class="sc red" onclick="renderStock('out');goTo('stock',3)"><div class="sv">${out}</div><div class="sl">No Stock</div></div>
+    <div class="sc" onclick="goTo('issue',2)"><div class="sv">${issues.length}</div><div class="sl">Total Issues</div></div>
+    <div class="sc red"><div class="sv">${dmg}</div><div class="sl">Damage / Reject</div></div>`;
+  let al='';
+  prods.filter(p=>p.quantity<=0).forEach(p=>{al+=`<div class="al r">&#10060; NO STOCK: <b>${p.item_code}</b> — ${p.description}</div>`;});
+  prods.filter(p=>p.quantity>0&&p.quantity<=10).forEach(p=>{al+=`<div class="al y">&#9888; LOW STOCK: <b>${p.item_code}</b> — ${p.description} (Qty: ${p.quantity})</div>`;});
+  prods.filter(p=>['damage','reject','expiry'].includes(p.status)).forEach(p=>{al+=`<div class="al r">&#128736; ${p.status.toUpperCase()}: <b>${p.item_code}</b> — ${p.description}</div>`;});
+  document.getElementById('alert-box').innerHTML=al||'<div class="al g">&#9989; All stocks are healthy</div>';
+  const tb=document.getElementById('dash-tb');
+  if(!prods.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">No products yet</td></tr>';return;}
+  tb.innerHTML=prods.slice(0,10).map((p,i)=>`<tr>
+    <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td>
+    <td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
+    <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
+    <td>${p.receiver_id||'—'}</td><td>${p.supplier_name||'—'}</td><td>${badge(p)}</td>
+  </tr>`).join('');
+}
+
+function renderProds(){
+  const tb=document.getElementById('prod-tb');
+  if(!prods.length){tb.innerHTML='<tr><td colspan="14" style="text-align:center;color:#334155;padding:20px">No products yet</td></tr>';return;}
+  tb.innerHTML=prods.map((p,i)=>`<tr>
+    <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td>
+    <td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
+    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td>
+    <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
+    <td>${p.location||'—'}</td><td>${p.supplier_name||'—'}</td>
+    <td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td>
+    <td>${badge(p)}</td><td>${p.remark||'—'}</td>
+    <td>
+      <button class="btn bp bsm" onclick="editP('${p.id}')">Edit</button>
+      <button class="btn bd bsm" onclick="delP('${p.id}')">Del</button>
+    </td>
+  </tr>`).join('');
+}
+
+function renderIssues(){
+  const tb=document.getElementById('iss-tb');
+  if(!issues.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#334155;padding:20px">No issues yet</td></tr>';return;}
+  tb.innerHTML=issues.map((i,n)=>`<tr>
+    <td style="color:#475569">${n+1}</td>
+    <td>${i.issues?.issue_date||'—'}</td>
+    <td>${i.issues?.issued_to||'—'}</td>
+    <td>${i.issues?.person_id||'—'}</td>
+    <td><b>${i.products?.item_code||'—'}</b></td>
+    <td>${i.products?.description||'—'}</td>
+    <td style="color:#fde68a;font-weight:700">${i.quantity}</td>
+    <td>${i.products?.unit||'—'}</td>
+    <td>${i.issues?.issued_by||'—'}</td>
+    <td><span class="bk bk-ok" style="font-size:9px">${i.issues?.issued_by_title||'—'}</span></td>
+    <td>${i.issues?.remark||'—'}</td>
+  </tr>`).join('');
+}
+
+function renderStock(f){
+  let d=[...prods];
+  if(f==='ok')d=d.filter(p=>p.quantity>10);
+  else if(f==='low')d=d.filter(p=>p.quantity>0&&p.quantity<=10);
+  else if(f==='out')d=d.filter(p=>p.quantity<=0);
+  else if(f==='dmg')d=d.filter(p=>['damage','reject','expiry'].includes(p.status));
+  const t={all:'All Stock',ok:'In Stock',low:'Low Stock (<10)',out:'No Stock',dmg:'Damage / Reject'};
+  document.getElementById('stock-title').textContent='◆ '+t[f];
+  const tb=document.getElementById('stk-tb');
+  if(!d.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">No items</td></tr>';return;}
+  tb.innerHTML=d.map((p,i)=>`<tr>
+    <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td>
+    <td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
+    <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
+    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td>
+    <td>SAR ${((+p.price_per_unit)*(+p.quantity)).toFixed(2)}</td>
+    <td>${p.supplier_name||'—'}</td><td>${p.receiver_id||'—'}</td>
+    <td>${p.location||'—'}</td><td>${badge(p)}</td>
+  </tr>`).join('');
+}
+
+function renderRptTable(){
+  const tb=document.getElementById('rpt-tb');
+  if(!issues.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">No data</td></tr>';return;}
+  tb.innerHTML=issues.map((i,n)=>`<tr>
+    <td style="color:#475569">${n+1}</td>
+    <td>${i.issues?.issue_date||'—'}</td>
+    <td>${i.issues?.issued_to||'—'}</td>
+    <td>${i.issues?.person_id||'—'}</td>
+    <td><b>${i.products?.item_code||'—'}</b></td>
+    <td>${i.products?.description||'—'}</td>
+    <td>${i.quantity}</td><td>${i.products?.unit||'—'}</td>
+    <td>${i.issues?.issued_by||'—'}</td>
+    <td>${i.issues?.issued_by_title||'—'}</td>
+  </tr>`).join('');
+}
+
+function fillSelects(){
+  const opts='<option value="">-- Select Product --</option>'+prods.map(p=>`<option value="${p.id}">[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</option>`).join('');
+  document.querySelectorAll('.isel').forEach(s=>{const v=s.value;s.innerHTML=opts;if(v)s.value=v;});
+  const rp=document.getElementById('rpt-pid');if(rp)rp.innerHTML=opts;
+}
+
+async function saveProduct(){
+  const code=document.getElementById('f-code').value.trim();
+  const desc=document.getElementById('f-desc').value.trim();
+  const unit=document.getElementById('f-unit').value;
+  if(!code||!desc||!unit){setMsg('pmsg','⚠ Please fill Item Code, Description and Unit!','#fca5a5');return;}
+  const obj={
+    item_code:code,
+    invoice_no:document.getElementById('f-invoice').value.trim()||null,
+    description:desc,unit,
+    price_per_unit:parseFloat(document.getElementById('f-price').value)||0,
+    quantity:parseFloat(document.getElementById('f-qty').value)||0,
+    location:document.getElementById('f-loc').value.trim()||null,
+    supplier_name:document.getElementById('f-sup').value.trim()||null,
+    last_purchase:document.getElementById('f-date').value||null,
+    receiver_id:document.getElementById('f-receiver').value.trim()||null,
+    status:document.getElementById('f-status').value||'ok',
+    remark:document.getElementById('f-rem').value.trim()||null
+  };
+  const eid=document.getElementById('edit-id').value;
+  let res;
+  if(eid){
+    res=await sb.from('products').update(obj).eq('id',eid);
+  } else {
+    const ex=prods.find(p=>p.item_code===code);
+    if(ex){res=await sb.from('products').update(obj).eq('id',ex.id);}
+    else{res=await sb.from('products').insert([obj]);}
+  }
+  if(res.error){setMsg('pmsg','Error: '+res.error.message,'#fca5a5');return;}
+  setMsg('pmsg','✓ Product saved successfully!','#4ade80');
+  clearProd();await loadAll();
+}
+
+function clearProd(){
+  ['f-code','f-invoice','f-desc','f-price','f-qty','f-loc','f-sup','f-date','f-receiver','f-rem'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-unit').value='';
+  document.getElementById('f-status').value='ok';
+  document.getElementById('edit-id').value='';
+}
+
+function editP(id){
+  const p=prods.find(x=>x.id===id);if(!p)return;
+  document.getElementById('edit-id').value=p.id;
+  document.getElementById('f-code').value=p.item_code;
+  document.getElementById('f-invoice').value=p.invoice_no||'';
+  document.getElementById('f-desc').value=p.description;
+  document.getElementById('f-unit').value=p.unit;
+  document.getElementById('f-price').value=p.price_per_unit;
+  document.getElementById('f-qty').value=p.quantity;
+  document.getElementById('f-loc').value=p.location||'';
+  document.getElementById('f-sup').value=p.supplier_name||'';
+  document.getElementById('f-date').value=p.last_purchase||'';
+  document.getElementById('f-receiver').value=p.receiver_id||'';
+  document.getElementById('f-status').value=p.status||'ok';
+  document.getElementById('f-rem').value=p.remark||'';
+  goTo('prod',1);window.scrollTo(0,0);
+}
+
+async function delP(id){
+  if(!confirm('Delete this product?'))return;
+  const r=await sb.from('products').delete().eq('id',id);
+  if(r.error){alert('Error: '+r.error.message);return;}
+  await loadAll();
+}
+
+function addIRow(){
+  const opts='<option value="">-- Select Product --</option>'+prods.map(p=>`<option value="${p.id}">[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</option>`).join('');
+  const d=document.createElement('div');d.className='ir';
+  d.innerHTML=`<select class="isel">${opts}</select><input type="number" class="iqty" placeholder="Qty" min="1"><button class="btn bd bsm" onclick="this.parentElement.remove()">&#10005;</button>`;
+  document.getElementById('ilist').appendChild(d);
+}
+
+async function saveIssue(){
+  const to=document.getElementById('i-to').value.trim();
+  const by=document.getElementById('i-by').value.trim();
+  const title=document.getElementById('i-title').value;
+  const pid=document.getElementById('i-pid').value.trim();
+  const dt=document.getElementById('i-date').value||new Date().toISOString().split('T')[0];
+  const rem=document.getElementById('i-rem').value.trim();
+  if(!to||!by){setMsg('imsg','⚠ Fill Issued To and Issued By!','#fca5a5');return;}
+  if(!title){setMsg('imsg','⚠ Please select Issuer Title!','#fca5a5');return;}
+  const rows=[...document.querySelectorAll('.ir')];
+  const items=[];
+  for(const r of rows){
+    const pid2=r.querySelector('.isel').value;
+    const qty=parseFloat(r.querySelector('.iqty').value);
+    if(!pid2||!qty||qty<=0)continue;
+    const p=prods.find(x=>x.id===pid2);if(!p)continue;
+    if(qty>p.quantity){setMsg('imsg','⚠ Not enough stock for '+p.item_code+'! Available: '+p.quantity,'#fca5a5');return;}
+    items.push({pid:pid2,qty,prod:p});
+  }
+  if(!items.length){setMsg('imsg','⚠ Add at least one item with quantity!','#fca5a5');return;}
+  const r1=await sb.from('issues').insert([{issued_to:to,issued_by:by,issued_by_title:title,person_id:pid||null,issue_date:dt,remark:rem||null}]).select().single();
+  if(r1.error){setMsg('imsg','Error: '+r1.error.message,'#fca5a5');return;}
+  for(const it of items){
+    await sb.from('issue_items').insert([{issue_id:r1.data.id,product_id:it.pid,quantity:it.qty}]);
+    await sb.from('products').update({quantity:it.prod.quantity-it.qty}).eq('id',it.pid);
+  }
+  setMsg('imsg','✓ Items issued! Stock updated automatically.','#4ade80');
+  clearIssue();await loadAll();
+}
+
+function clearIssue(){
+  ['i-to','i-by','i-pid','i-rem'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('i-title').value='';
+  document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ilist').innerHTML='';addIRow();
+}
+
+function pdfHeader(doc,subtitle){
+  doc.setFillColor(13,27,62);doc.rect(0,0,297,38,'F');
+  doc.setFillColor(249,115,22);doc.rect(0,34,297,4,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(15);doc.setFont(undefined,'bold');
+  doc.text('AJANTA CONSTRUCTION COMPANY',148,14,{align:'center'});
+  doc.setFontSize(9);doc.setFont(undefined,'normal');
+  doc.text('Store Inventory Management System',148,22,{align:'center'});
+  doc.setFontSize(8);doc.text('Strength  ·  Trust  ·  Innovation',148,30,{align:'center'});
+  doc.setTextColor(0,0,0);doc.setFontSize(13);doc.setFont(undefined,'bold');doc.text(subtitle,14,50);
+  doc.setFontSize(8);doc.setFont(undefined,'normal');doc.setTextColor(100,100,100);
+  doc.text('Generated: '+new Date().toLocaleString(),14,57);doc.setTextColor(0,0,0);
+}
+
+function pdfFooter(doc){
+  doc.setFontSize(7);doc.setTextColor(150,150,150);
+  const h=doc.internal.pageSize.getHeight();
+  doc.text('Ajanta Construction Company — Store Inventory Report — Confidential',148,h-5,{align:'center'});
+}
+
+function makePDF(type){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF('l','mm','a4');
+  const today=new Date().toISOString().split('T')[0];
+  const now=new Date();
+  let title='',cols=[],rows=[];
+  if(type==='daily'){
+    title='Daily Issue Report — '+today;
+    const d=issues.filter(i=>i.issues?.issue_date===today);
+    cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title','Remark']];
+    rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
+  }else if(type==='weekly'){
+    title='Weekly Issue Report';
+    const cut=new Date(now-7*864e5).toISOString().split('T')[0];
+    const d=issues.filter(i=>i.issues?.issue_date>=cut);
+    cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title']];
+    rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'']);
+  }else if(type==='monthly'){
+    title='Monthly Issue Report';
+    const cut=new Date(now-30*864e5).toISOString().split('T')[0];
+    const d=issues.filter(i=>i.issues?.issue_date>=cut);
+    cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title']];
+    rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'']);
+  }else if(type==='stock'){
+    title='Full Stock Report — '+today;
+    cols=[['#','Code','Invoice No','Description','Unit','Qty','Price/Unit','Total Value','Supplier','Receiver ID','Location','Status']];
+    rows=prods.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,(+p.price_per_unit).toFixed(2),((+p.price_per_unit)*(+p.quantity)).toFixed(2),p.supplier_name||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW':p.status.toUpperCase()]);
+  }else if(type==='allissue'){
+    title='Complete Issue Report';
+    cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title','Remark']];
+    rows=issues.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
+  }else if(type==='lowstock'){
+    title='Low Stock / No Stock Alert — '+today;
+    const d=prods.filter(p=>p.quantity<=10);
+    cols=[['#','Code','Invoice No','Description','Unit','Qty','Supplier','Receiver ID','Location','Status']];
+    rows=d.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,p.supplier_name||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':'LOW STOCK']);
+  }
+  pdfHeader(doc,title);
+  if(!rows.length){doc.setFontSize(10);doc.text('No data available for this report.',14,70);}
+  else{
+    doc.autoTable({head:cols,body:rows,startY:64,styles:{fontSize:7.5,cellPadding:2},headStyles:{fillColor:[13,27,62],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:10,right:10}});
+    const fy=doc.lastAutoTable.finalY+8;
+    doc.setFontSize(8);doc.setTextColor(60,60,60);
+    doc.text('Total Records: '+rows.length,14,fy);
+    if(type==='stock'){
+      const tv=prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
+      doc.text('Total Inventory Value: SAR '+tv.toFixed(2),14,fy+6);
+    }
+  }
+  pdfFooter(doc);
+  doc.save('Ajanta_'+type+'_'+today+'.pdf');
+  setMsg('rmsg','✓ PDF downloaded!','#4ade80');
+}
+
+function makeProdPDF(){
+  const pid=document.getElementById('rpt-pid').value;
+  if(!pid){setMsg('rmsg','⚠ Please select a product!','#fca5a5');return;}
+  const p=prods.find(x=>x.id===pid);
+  const ilist=issues.filter(i=>i.product_id===pid);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  const today=new Date().toISOString().split('T')[0];
+  pdfHeader(doc,'Product Report: '+p.description+' ('+p.item_code+')');
+  doc.setFontSize(9);doc.setTextColor(50,50,50);
+  doc.text('Invoice No: '+(p.invoice_no||'—')+'   |   Unit: '+p.unit+'   |   Stock: '+p.quantity+'   |   Price: SAR '+p.price_per_unit,14,65);
+  doc.text('Supplier: '+(p.supplier_name||'—')+'   |   Receiver ID: '+(p.receiver_id||'—')+'   |   Location: '+(p.location||'—'),14,72);
+  doc.text('Last Purchase: '+(p.last_purchase||'—')+'   |   Status: '+(p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW STOCK':'OK'),14,79);
+  doc.setFontSize(11);doc.setFont(undefined,'bold');doc.setTextColor(0,0,0);
+  doc.text('Issue History',14,89);
+  if(!ilist.length){
+    doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text('No issues recorded.',14,98);
+  }else{
+    const cols=[['#','Date','Issued To','Person ID','Qty','Unit','Issued By','Title','Remark']];
+    const rows=ilist.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.quantity,p.unit,i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
+    doc.autoTable({head:cols,body:rows,startY:93,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[13,27,62],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:10,right:10}});
+    const ti=ilist.reduce((s,i)=>s+(+i.quantity),0);
+    doc.setFontSize(8);doc.setTextColor(60,60,60);
+    doc.text('Total Issued: '+ti+' '+p.unit,14,doc.lastAutoTable.finalY+8);
+  }
+  pdfFooter(doc);
+  doc.save('Ajanta_product_'+p.item_code+'_'+today+'.pdf');
+  setMsg('rmsg','✓ PDF downloaded!','#4ade80');
+}
+
+function setMsg(id,msg,color){
+  const el=document.getElementById(id);
+  if(el){el.textContent=msg;el.style.color=color;setTimeout(()=>el.textContent='',5000);}
+}
+
+sb.channel('realtime-inv')
+  .on('postgres_changes',{event:'*',schema:'public',table:'products'},loadAll)
+  .on('postgres_changes',{event:'*',schema:'public',table:'issues'},loadAll)
+  .on('postgres_changes',{event:'*',schema:'public',table:'issue_items'},loadAll)
+  .subscribe();
+
+document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
+loadAll();
+</script>
+</body>
+</html>
