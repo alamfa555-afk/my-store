@@ -40,11 +40,16 @@ body{font-family:'Segoe UI',sans-serif;background:#0a0f1e;color:#e2e8f0;min-heig
 .card{background:#0d1b3e;border:1px solid #1e3a8a;border-radius:14px;padding:16px;margin-bottom:14px}
 .ct{font-size:12px;font-weight:700;color:#63b3ed;margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase}
 .fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
-.fl{display:flex;flex-direction:column;gap:4px}
+.fl{display:flex;flex-direction:column;gap:4px;position:relative}
 .fl label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .fl input,.fl select{background:#080e1e;border:1px solid #1e3a8a;border-radius:7px;padding:8px 10px;color:#e2e8f0;font-size:13px;outline:none;width:100%}
 .fl input:focus,.fl select:focus{border-color:#3b82f6}
 .fl select option{background:#080e1e}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:#0d1b3e;border:1px solid #3b82f6;border-radius:0 0 8px 8px;z-index:200;max-height:160px;overflow-y:auto;display:none}
+.ac-list.show{display:block}
+.ac-item{padding:8px 10px;font-size:12px;cursor:pointer;color:#e2e8f0;border-bottom:1px solid #1e3a8a}
+.ac-item:hover{background:#1e3a8a;color:#fff}
+.ac-item:last-child{border-bottom:none}
 .br{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;transition:.2s}
 .bp{background:#1d4ed8;color:#fff}.bp:hover{background:#1e40af}
@@ -98,8 +103,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">&#9670; Recent Products</div>
     <div class="tw"><table>
-      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Qty</th><th>Receiver ID</th><th>Supplier</th><th>Status</th></tr></thead>
-      <tbody id="dash-tb"><tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Qty</th><th>Receiver ID</th><th>Supplier</th><th>Contact</th><th>Status</th></tr></thead>
+      <tbody id="dash-tb"><tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -110,9 +115,21 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     <div class="ct">&#9670; Add / Edit Product</div>
     <input type="hidden" id="edit-id">
     <div class="fg">
-      <div class="fl"><label>Item Code *</label><input id="f-code" placeholder="e.g. ITM-001"></div>
-      <div class="fl"><label>Invoice No</label><input id="f-invoice" placeholder="e.g. INV-2024-001"></div>
-      <div class="fl"><label>Description *</label><input id="f-desc" placeholder="Product description"></div>
+      <div class="fl">
+        <label>Item Code *</label>
+        <input id="f-code" placeholder="e.g. ITM-001" autocomplete="off" oninput="acShow(this,'item_code')" onblur="acHide('ac-code')" onfocus="acShow(this,'item_code')">
+        <div class="ac-list" id="ac-code"></div>
+      </div>
+      <div class="fl">
+        <label>Invoice No</label>
+        <input id="f-invoice" placeholder="e.g. INV-2024-001" autocomplete="off" oninput="acShow(this,'invoice_no')" onblur="acHide('ac-invoice')" onfocus="acShow(this,'invoice_no')">
+        <div class="ac-list" id="ac-invoice"></div>
+      </div>
+      <div class="fl">
+        <label>Description *</label>
+        <input id="f-desc" placeholder="Product description" autocomplete="off" oninput="acShow(this,'description')" onblur="acHide('ac-desc')" onfocus="acShow(this,'description')">
+        <div class="ac-list" id="ac-desc"></div>
+      </div>
       <div class="fl"><label>Unit *</label>
         <select id="f-unit">
           <option value="">-- Select Unit --</option>
@@ -123,10 +140,27 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       </div>
       <div class="fl"><label>Price / Unit (SAR)</label><input id="f-price" type="number" placeholder="0.00" min="0" step="0.01"></div>
       <div class="fl"><label>Quantity</label><input id="f-qty" type="number" placeholder="0" min="0"></div>
-      <div class="fl"><label>Location</label><input id="f-loc" placeholder="Warehouse / Shelf / Room"></div>
-      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company name"></div>
+      <div class="fl">
+        <label>Location</label>
+        <input id="f-loc" placeholder="Warehouse / Shelf" autocomplete="off" oninput="acShow(this,'location')" onblur="acHide('ac-loc')" onfocus="acShow(this,'location')">
+        <div class="ac-list" id="ac-loc"></div>
+      </div>
+      <div class="fl">
+        <label>Supplier Name</label>
+        <input id="f-sup" placeholder="Supplier company name" autocomplete="off" oninput="acShow(this,'supplier_name')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name')">
+        <div class="ac-list" id="ac-sup"></div>
+      </div>
+      <div class="fl">
+        <label>Supplier Contact No.</label>
+        <input id="f-supcon" placeholder="+966 5xx xxx xxxx" autocomplete="off" oninput="acShow(this,'supplier_contact')" onblur="acHide('ac-supcon')" onfocus="acShow(this,'supplier_contact')">
+        <div class="ac-list" id="ac-supcon"></div>
+      </div>
       <div class="fl"><label>Last Purchase Date</label><input id="f-date" type="date"></div>
-      <div class="fl"><label>Receiver ID</label><input id="f-receiver" placeholder="e.g. EMP-001 or Name"></div>
+      <div class="fl">
+        <label>Receiver ID</label>
+        <input id="f-receiver" placeholder="e.g. EMP-001" autocomplete="off" oninput="acShow(this,'receiver_id')" onblur="acHide('ac-receiver')" onfocus="acShow(this,'receiver_id')">
+        <div class="ac-list" id="ac-receiver"></div>
+      </div>
       <div class="fl"><label>Status</label>
         <select id="f-status">
           <option value="ok">OK</option>
@@ -146,8 +180,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">&#9670; All Products</div>
     <div class="tw"><table>
-      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Price/Unit</th><th>Qty</th><th>Location</th><th>Supplier</th><th>Receiver ID</th><th>Last Purchase</th><th>Status</th><th>Remark</th><th>Action</th></tr></thead>
-      <tbody id="prod-tb"><tr><td colspan="14" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Price/Unit</th><th>Qty</th><th>Location</th><th>Supplier</th><th>Sup.Contact</th><th>Receiver ID</th><th>Last Purchase</th><th>Status</th><th>Remark</th><th>Action</th></tr></thead>
+      <tbody id="prod-tb"><tr><td colspan="15" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -157,20 +191,33 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">&#9670; Issue Items</div>
     <div class="fg">
-      <div class="fl"><label>Issued To (Name) *</label><input id="i-to" placeholder="Person / Department name"></div>
-      <div class="fl"><label>Person ID</label><input id="i-pid" placeholder="e.g. EMP-001"></div>
-      <div class="fl"><label>Issued By (Name) *</label><input id="i-by" placeholder="Issuer full name"></div>
+      <div class="fl">
+        <label>Issued To (Name) *</label>
+        <input id="i-to" placeholder="Person / Department" autocomplete="off" oninput="acShow(this,'issued_to')" onblur="acHide('ac-ito')" onfocus="acShow(this,'issued_to')">
+        <div class="ac-list" id="ac-ito"></div>
+      </div>
+      <div class="fl">
+        <label>Person ID</label>
+        <input id="i-pid" placeholder="e.g. EMP-001" autocomplete="off" oninput="acShow(this,'person_id')" onblur="acHide('ac-ipid')" onfocus="acShow(this,'person_id')">
+        <div class="ac-list" id="ac-ipid"></div>
+      </div>
+      <div class="fl">
+        <label>Receiver Contact No.</label>
+        <input id="i-rcon" placeholder="+966 5xx xxx xxxx" autocomplete="off" oninput="acShow(this,'receiver_contact')" onblur="acHide('ac-ircon')" onfocus="acShow(this,'receiver_contact')">
+        <div class="ac-list" id="ac-ircon"></div>
+      </div>
+      <div class="fl">
+        <label>Issued By (Name) *</label>
+        <input id="i-by" placeholder="Issuer full name" autocomplete="off" oninput="acShow(this,'issued_by')" onblur="acHide('ac-iby')" onfocus="acShow(this,'issued_by')">
+        <div class="ac-list" id="ac-iby"></div>
+      </div>
       <div class="fl"><label>Issuer Title *</label>
         <select id="i-title">
           <option value="">-- Select Title --</option>
-          <option value="Store Keeper">Store Keeper</option>
-          <option value="Supervisor">Supervisor</option>
-          <option value="Incharge">Incharge</option>
-          <option value="Manager">Manager</option>
-          <option value="Assistant Manager">Assistant Manager</option>
-          <option value="General Manager">General Manager</option>
-          <option value="Director">Director</option>
-          <option value="Other">Other</option>
+          <option>Store Keeper</option><option>Supervisor</option>
+          <option>Incharge</option><option>Manager</option>
+          <option>Assistant Manager</option><option>General Manager</option>
+          <option>Director</option><option>Other</option>
         </select>
       </div>
       <div class="fl"><label>Issue Date</label><input id="i-date" type="date"></div>
@@ -188,8 +235,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">&#9670; Issue History</div>
     <div class="tw"><table>
-      <thead><tr><th>S.No</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
-      <tbody id="iss-tb"><tr><td colspan="11" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+      <thead><tr><th>S.No</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Rcvr Contact</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
+      <tbody id="iss-tb"><tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -206,8 +253,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct" id="stock-title">&#9670; All Stock</div>
     <div class="tw"><table>
-      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price/Unit</th><th>Total Value</th><th>Supplier</th><th>Receiver ID</th><th>Location</th><th>Status</th></tr></thead>
-      <tbody id="stk-tb"><tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+      <thead><tr><th>S.No</th><th>Code</th><th>Invoice No</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price/Unit</th><th>Total Value</th><th>Supplier</th><th>Sup.Contact</th><th>Receiver ID</th><th>Location</th><th>Status</th></tr></thead>
+      <tbody id="stk-tb"><tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -244,17 +291,58 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 const SURL='https://uxhtffhfudynqbazfzjg.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4aHRmZmhmdWR5bnFiYXpmempnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5OTEyMjksImV4cCI6MjA5NzU2NzIyOX0.Cz7yXki5C6i8UyHgt6pH0wjp6t-IJ_MbPkAr6tnp6mg';
 const sb=supabase.createClient(SURL,SKEY);
-let prods=[],issues=[];
+let prods=[],issues=[],acData={};
+
+// Load autocomplete data from DB
+async function loadAC(){
+  const {data}=await sb.from('autocomplete_data').select('*');
+  acData={};
+  (data||[]).forEach(r=>{
+    if(!acData[r.field_name])acData[r.field_name]=[];
+    acData[r.field_name].push(r.field_value);
+  });
+}
+
+// Save new value to autocomplete
+async function saveAC(field,value){
+  if(!value||value.trim()==='')return;
+  value=value.trim();
+  if(acData[field]&&acData[field].includes(value))return;
+  await sb.from('autocomplete_data').upsert([{field_name:field,field_value:value}],{onConflict:'field_value'});
+  if(!acData[field])acData[field]=[];
+  acData[field].push(value);
+}
+
+// Show autocomplete dropdown
+function acShow(input,field){
+  const val=input.value.trim().toLowerCase();
+  const listId='ac-'+input.id.replace('f-','').replace('i-','');
+  // find list near input
+  const list=input.parentElement.querySelector('.ac-list');
+  if(!list)return;
+  const items=(acData[field]||[]).filter(v=>v.toLowerCase().includes(val)&&v!==input.value);
+  if(!items.length||!val){list.classList.remove('show');return;}
+  list.innerHTML=items.slice(0,8).map(v=>`<div class="ac-item" onmousedown="pickAC('${input.id}','${v.replace(/'/g,"\\'")}',event)">${v}</div>`).join('');
+  list.classList.add('show');
+}
+
+function pickAC(inputId,val,e){
+  e.preventDefault();
+  const el=document.getElementById(inputId);
+  if(el){el.value=val;el.dispatchEvent(new Event('input'));}
+  const list=el.parentElement.querySelector('.ac-list');
+  if(list)list.classList.remove('show');
+}
+
+function acHide(id){
+  setTimeout(()=>{const l=document.getElementById(id);if(l)l.classList.remove('show');},200);
+}
 
 async function loadAll(){
-  try{
-    const r1=await sb.from('products').select('*').order('created_at',{ascending:false});
-    const r2=await sb.from('issue_items').select('*,issues(*),products(*)').order('created_at',{ascending:false});
-    if(r1.error)throw r1.error;
-    if(r2.error)throw r2.error;
-    prods=r1.data||[];issues=r2.data||[];
-    renderDash();renderProds();renderIssues();renderStock('all');renderRptTable();fillSelects();
-  }catch(e){console.error('Load error:',e);}
+  const r1=await sb.from('products').select('*').order('created_at',{ascending:false});
+  const r2=await sb.from('issue_items').select('*,issues(*),products(*)').order('created_at',{ascending:false});
+  prods=r1.data||[];issues=r2.data||[];
+  renderDash();renderProds();renderIssues();renderStock('all');renderRptTable();fillSelects();
 }
 
 function goTo(id,idx){
@@ -288,24 +376,26 @@ function renderDash(){
   prods.filter(p=>['damage','reject','expiry'].includes(p.status)).forEach(p=>{al+=`<div class="al r">&#128736; ${p.status.toUpperCase()}: <b>${p.item_code}</b> — ${p.description}</div>`;});
   document.getElementById('alert-box').innerHTML=al||'<div class="al g">&#9989; All stocks are healthy</div>';
   const tb=document.getElementById('dash-tb');
-  if(!prods.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">No products yet</td></tr>';return;}
+  if(!prods.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">No products yet</td></tr>';return;}
   tb.innerHTML=prods.slice(0,10).map((p,i)=>`<tr>
     <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td>
     <td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
     <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
-    <td>${p.receiver_id||'—'}</td><td>${p.supplier_name||'—'}</td><td>${badge(p)}</td>
+    <td>${p.receiver_id||'—'}</td><td>${p.supplier_name||'—'}</td>
+    <td>${p.supplier_contact||'—'}</td><td>${badge(p)}</td>
   </tr>`).join('');
 }
 
 function renderProds(){
   const tb=document.getElementById('prod-tb');
-  if(!prods.length){tb.innerHTML='<tr><td colspan="14" style="text-align:center;color:#334155;padding:20px">No products yet</td></tr>';return;}
+  if(!prods.length){tb.innerHTML='<tr><td colspan="15" style="text-align:center;color:#334155;padding:20px">No products yet</td></tr>';return;}
   tb.innerHTML=prods.map((p,i)=>`<tr>
     <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td>
     <td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
     <td>SAR ${(+p.price_per_unit).toFixed(2)}</td>
     <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
     <td>${p.location||'—'}</td><td>${p.supplier_name||'—'}</td>
+    <td>${p.supplier_contact||'—'}</td>
     <td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td>
     <td>${badge(p)}</td><td>${p.remark||'—'}</td>
     <td>
@@ -317,12 +407,13 @@ function renderProds(){
 
 function renderIssues(){
   const tb=document.getElementById('iss-tb');
-  if(!issues.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#334155;padding:20px">No issues yet</td></tr>';return;}
+  if(!issues.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">No issues yet</td></tr>';return;}
   tb.innerHTML=issues.map((i,n)=>`<tr>
     <td style="color:#475569">${n+1}</td>
     <td>${i.issues?.issue_date||'—'}</td>
     <td>${i.issues?.issued_to||'—'}</td>
     <td>${i.issues?.person_id||'—'}</td>
+    <td>${i.issues?.receiver_contact||'—'}</td>
     <td><b>${i.products?.item_code||'—'}</b></td>
     <td>${i.products?.description||'—'}</td>
     <td style="color:#fde68a;font-weight:700">${i.quantity}</td>
@@ -342,15 +433,15 @@ function renderStock(f){
   const t={all:'All Stock',ok:'In Stock',low:'Low Stock (<10)',out:'No Stock',dmg:'Damage / Reject'};
   document.getElementById('stock-title').textContent='◆ '+t[f];
   const tb=document.getElementById('stk-tb');
-  if(!d.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">No items</td></tr>';return;}
+  if(!d.length){tb.innerHTML='<tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">No items</td></tr>';return;}
   tb.innerHTML=d.map((p,i)=>`<tr>
     <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td>
     <td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
     <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
     <td>SAR ${(+p.price_per_unit).toFixed(2)}</td>
     <td>SAR ${((+p.price_per_unit)*(+p.quantity)).toFixed(2)}</td>
-    <td>${p.supplier_name||'—'}</td><td>${p.receiver_id||'—'}</td>
-    <td>${p.location||'—'}</td><td>${badge(p)}</td>
+    <td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td>
+    <td>${p.receiver_id||'—'}</td><td>${p.location||'—'}</td><td>${badge(p)}</td>
   </tr>`).join('');
 }
 
@@ -359,14 +450,11 @@ function renderRptTable(){
   if(!issues.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">No data</td></tr>';return;}
   tb.innerHTML=issues.map((i,n)=>`<tr>
     <td style="color:#475569">${n+1}</td>
-    <td>${i.issues?.issue_date||'—'}</td>
-    <td>${i.issues?.issued_to||'—'}</td>
+    <td>${i.issues?.issue_date||'—'}</td><td>${i.issues?.issued_to||'—'}</td>
     <td>${i.issues?.person_id||'—'}</td>
-    <td><b>${i.products?.item_code||'—'}</b></td>
-    <td>${i.products?.description||'—'}</td>
+    <td><b>${i.products?.item_code||'—'}</b></td><td>${i.products?.description||'—'}</td>
     <td>${i.quantity}</td><td>${i.products?.unit||'—'}</td>
-    <td>${i.issues?.issued_by||'—'}</td>
-    <td>${i.issues?.issued_by_title||'—'}</td>
+    <td>${i.issues?.issued_by||'—'}</td><td>${i.issues?.issued_by_title||'—'}</td>
   </tr>`).join('');
 }
 
@@ -381,35 +469,46 @@ async function saveProduct(){
   const desc=document.getElementById('f-desc').value.trim();
   const unit=document.getElementById('f-unit').value;
   if(!code||!desc||!unit){setMsg('pmsg','⚠ Please fill Item Code, Description and Unit!','#fca5a5');return;}
+  const invoice=document.getElementById('f-invoice').value.trim();
+  const loc=document.getElementById('f-loc').value.trim();
+  const sup=document.getElementById('f-sup').value.trim();
+  const supcon=document.getElementById('f-supcon').value.trim();
+  const receiver=document.getElementById('f-receiver').value.trim();
   const obj={
-    item_code:code,
-    invoice_no:document.getElementById('f-invoice').value.trim()||null,
-    description:desc,unit,
+    item_code:code,invoice_no:invoice||null,description:desc,unit,
     price_per_unit:parseFloat(document.getElementById('f-price').value)||0,
     quantity:parseFloat(document.getElementById('f-qty').value)||0,
-    location:document.getElementById('f-loc').value.trim()||null,
-    supplier_name:document.getElementById('f-sup').value.trim()||null,
+    location:loc||null,supplier_name:sup||null,
+    supplier_contact:supcon||null,
     last_purchase:document.getElementById('f-date').value||null,
-    receiver_id:document.getElementById('f-receiver').value.trim()||null,
+    receiver_id:receiver||null,
     status:document.getElementById('f-status').value||'ok',
     remark:document.getElementById('f-rem').value.trim()||null
   };
   const eid=document.getElementById('edit-id').value;
   let res;
-  if(eid){
-    res=await sb.from('products').update(obj).eq('id',eid);
-  } else {
+  if(eid){res=await sb.from('products').update(obj).eq('id',eid);}
+  else{
     const ex=prods.find(p=>p.item_code===code);
-    if(ex){res=await sb.from('products').update(obj).eq('id',ex.id);}
-    else{res=await sb.from('products').insert([obj]);}
+    if(ex)res=await sb.from('products').update(obj).eq('id',ex.id);
+    else res=await sb.from('products').insert([obj]);
   }
   if(res.error){setMsg('pmsg','Error: '+res.error.message,'#fca5a5');return;}
+  // Save autocomplete values
+  await saveAC('item_code',code);
+  await saveAC('invoice_no',invoice);
+  await saveAC('description',desc);
+  await saveAC('location',loc);
+  await saveAC('supplier_name',sup);
+  await saveAC('supplier_contact',supcon);
+  await saveAC('receiver_id',receiver);
+  await loadAC();
   setMsg('pmsg','✓ Product saved successfully!','#4ade80');
   clearProd();await loadAll();
 }
 
 function clearProd(){
-  ['f-code','f-invoice','f-desc','f-price','f-qty','f-loc','f-sup','f-date','f-receiver','f-rem'].forEach(id=>document.getElementById(id).value='');
+  ['f-code','f-invoice','f-desc','f-price','f-qty','f-loc','f-sup','f-supcon','f-date','f-receiver','f-rem'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-unit').value='';
   document.getElementById('f-status').value='ok';
   document.getElementById('edit-id').value='';
@@ -426,6 +525,7 @@ function editP(id){
   document.getElementById('f-qty').value=p.quantity;
   document.getElementById('f-loc').value=p.location||'';
   document.getElementById('f-sup').value=p.supplier_name||'';
+  document.getElementById('f-supcon').value=p.supplier_contact||'';
   document.getElementById('f-date').value=p.last_purchase||'';
   document.getElementById('f-receiver').value=p.receiver_id||'';
   document.getElementById('f-status').value=p.status||'ok';
@@ -452,6 +552,7 @@ async function saveIssue(){
   const by=document.getElementById('i-by').value.trim();
   const title=document.getElementById('i-title').value;
   const pid=document.getElementById('i-pid').value.trim();
+  const rcon=document.getElementById('i-rcon').value.trim();
   const dt=document.getElementById('i-date').value||new Date().toISOString().split('T')[0];
   const rem=document.getElementById('i-rem').value.trim();
   if(!to||!by){setMsg('imsg','⚠ Fill Issued To and Issued By!','#fca5a5');return;}
@@ -467,40 +568,47 @@ async function saveIssue(){
     items.push({pid:pid2,qty,prod:p});
   }
   if(!items.length){setMsg('imsg','⚠ Add at least one item with quantity!','#fca5a5');return;}
-  const r1=await sb.from('issues').insert([{issued_to:to,issued_by:by,issued_by_title:title,person_id:pid||null,issue_date:dt,remark:rem||null}]).select().single();
+  const r1=await sb.from('issues').insert([{issued_to:to,issued_by:by,issued_by_title:title,person_id:pid||null,receiver_contact:rcon||null,issue_date:dt,remark:rem||null}]).select().single();
   if(r1.error){setMsg('imsg','Error: '+r1.error.message,'#fca5a5');return;}
   for(const it of items){
     await sb.from('issue_items').insert([{issue_id:r1.data.id,product_id:it.pid,quantity:it.qty}]);
     await sb.from('products').update({quantity:it.prod.quantity-it.qty}).eq('id',it.pid);
   }
+  // Save autocomplete for issue fields
+  await saveAC('issued_to',to);
+  await saveAC('issued_by',by);
+  await saveAC('person_id',pid);
+  await saveAC('receiver_contact',rcon);
+  await loadAC();
   setMsg('imsg','✓ Items issued! Stock updated automatically.','#4ade80');
   clearIssue();await loadAll();
 }
 
 function clearIssue(){
-  ['i-to','i-by','i-pid','i-rem'].forEach(id=>document.getElementById(id).value='');
+  ['i-to','i-by','i-pid','i-rcon','i-rem'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('i-title').value='';
   document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('ilist').innerHTML='';addIRow();
 }
 
-function pdfHeader(doc,subtitle){
-  doc.setFillColor(13,27,62);doc.rect(0,0,297,38,'F');
-  doc.setFillColor(249,115,22);doc.rect(0,34,297,4,'F');
+function pdfHeader(doc,subtitle,landscape){
+  const w=landscape?297:210;
+  doc.setFillColor(13,27,62);doc.rect(0,0,w,38,'F');
+  doc.setFillColor(249,115,22);doc.rect(0,34,w,4,'F');
   doc.setTextColor(255,255,255);doc.setFontSize(15);doc.setFont(undefined,'bold');
-  doc.text('AJANTA CONSTRUCTION COMPANY',148,14,{align:'center'});
+  doc.text('AJANTA CONSTRUCTION COMPANY',w/2,14,{align:'center'});
   doc.setFontSize(9);doc.setFont(undefined,'normal');
-  doc.text('Store Inventory Management System',148,22,{align:'center'});
-  doc.setFontSize(8);doc.text('Strength  ·  Trust  ·  Innovation',148,30,{align:'center'});
+  doc.text('Store Inventory Management System',w/2,22,{align:'center'});
+  doc.setFontSize(8);doc.text('Strength  ·  Trust  ·  Innovation',w/2,30,{align:'center'});
   doc.setTextColor(0,0,0);doc.setFontSize(13);doc.setFont(undefined,'bold');doc.text(subtitle,14,50);
   doc.setFontSize(8);doc.setFont(undefined,'normal');doc.setTextColor(100,100,100);
   doc.text('Generated: '+new Date().toLocaleString(),14,57);doc.setTextColor(0,0,0);
 }
 
-function pdfFooter(doc){
+function pdfFooter(doc,landscape){
+  const w=landscape?297:210;const h=doc.internal.pageSize.getHeight();
   doc.setFontSize(7);doc.setTextColor(150,150,150);
-  const h=doc.internal.pageSize.getHeight();
-  doc.text('Ajanta Construction Company — Store Inventory Report — Confidential',148,h-5,{align:'center'});
+  doc.text('Ajanta Construction Company — Store Inventory Report — Confidential',w/2,h-5,{align:'center'});
 }
 
 function makePDF(type){
@@ -512,8 +620,8 @@ function makePDF(type){
   if(type==='daily'){
     title='Daily Issue Report — '+today;
     const d=issues.filter(i=>i.issues?.issue_date===today);
-    cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title','Remark']];
-    rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
+    cols=[['#','Date','Issued To','Person ID','Rcvr Contact','Item Code','Desc','Qty','Unit','Issued By','Title','Remark']];
+    rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.issues?.receiver_contact||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
   }else if(type==='weekly'){
     title='Weekly Issue Report';
     const cut=new Date(now-7*864e5).toISOString().split('T')[0];
@@ -528,31 +636,28 @@ function makePDF(type){
     rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'']);
   }else if(type==='stock'){
     title='Full Stock Report — '+today;
-    cols=[['#','Code','Invoice No','Description','Unit','Qty','Price/Unit','Total Value','Supplier','Receiver ID','Location','Status']];
-    rows=prods.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,(+p.price_per_unit).toFixed(2),((+p.price_per_unit)*(+p.quantity)).toFixed(2),p.supplier_name||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW':p.status.toUpperCase()]);
+    cols=[['#','Code','Invoice','Description','Unit','Qty','Price','Total','Supplier','Sup.Contact','Receiver','Location','Status']];
+    rows=prods.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,(+p.price_per_unit).toFixed(2),((+p.price_per_unit)*(+p.quantity)).toFixed(2),p.supplier_name||'—',p.supplier_contact||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW':p.status.toUpperCase()]);
   }else if(type==='allissue'){
     title='Complete Issue Report';
-    cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title','Remark']];
-    rows=issues.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
+    cols=[['#','Date','Issued To','Person ID','Rcvr Contact','Item Code','Desc','Qty','Unit','Issued By','Title','Remark']];
+    rows=issues.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.issues?.receiver_contact||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
   }else if(type==='lowstock'){
     title='Low Stock / No Stock Alert — '+today;
     const d=prods.filter(p=>p.quantity<=10);
-    cols=[['#','Code','Invoice No','Description','Unit','Qty','Supplier','Receiver ID','Location','Status']];
-    rows=d.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,p.supplier_name||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':'LOW STOCK']);
+    cols=[['#','Code','Invoice','Description','Unit','Qty','Supplier','Sup.Contact','Receiver','Location','Status']];
+    rows=d.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,p.supplier_name||'—',p.supplier_contact||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':'LOW STOCK']);
   }
-  pdfHeader(doc,title);
-  if(!rows.length){doc.setFontSize(10);doc.text('No data available for this report.',14,70);}
+  pdfHeader(doc,title,true);
+  if(!rows.length){doc.setFontSize(10);doc.text('No data available.',14,70);}
   else{
-    doc.autoTable({head:cols,body:rows,startY:64,styles:{fontSize:7.5,cellPadding:2},headStyles:{fillColor:[13,27,62],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:10,right:10}});
+    doc.autoTable({head:cols,body:rows,startY:64,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[13,27,62],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:10,right:10}});
     const fy=doc.lastAutoTable.finalY+8;
     doc.setFontSize(8);doc.setTextColor(60,60,60);
     doc.text('Total Records: '+rows.length,14,fy);
-    if(type==='stock'){
-      const tv=prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
-      doc.text('Total Inventory Value: SAR '+tv.toFixed(2),14,fy+6);
-    }
+    if(type==='stock'){const tv=prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);doc.text('Total Inventory Value: SAR '+tv.toFixed(2),14,fy+6);}
   }
-  pdfFooter(doc);
+  pdfFooter(doc,true);
   doc.save('Ajanta_'+type+'_'+today+'.pdf');
   setMsg('rmsg','✓ PDF downloaded!','#4ade80');
 }
@@ -565,24 +670,24 @@ function makeProdPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF();
   const today=new Date().toISOString().split('T')[0];
-  pdfHeader(doc,'Product Report: '+p.description+' ('+p.item_code+')');
+  pdfHeader(doc,'Product Report: '+p.description+' ('+p.item_code+')',false);
   doc.setFontSize(9);doc.setTextColor(50,50,50);
-  doc.text('Invoice No: '+(p.invoice_no||'—')+'   |   Unit: '+p.unit+'   |   Stock: '+p.quantity+'   |   Price: SAR '+p.price_per_unit,14,65);
-  doc.text('Supplier: '+(p.supplier_name||'—')+'   |   Receiver ID: '+(p.receiver_id||'—')+'   |   Location: '+(p.location||'—'),14,72);
-  doc.text('Last Purchase: '+(p.last_purchase||'—')+'   |   Status: '+(p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW STOCK':'OK'),14,79);
+  doc.text('Invoice: '+(p.invoice_no||'—')+'  |  Unit: '+p.unit+'  |  Stock: '+p.quantity+'  |  Price: SAR '+p.price_per_unit,14,65);
+  doc.text('Supplier: '+(p.supplier_name||'—')+'  |  Contact: '+(p.supplier_contact||'—'),14,72);
+  doc.text('Receiver ID: '+(p.receiver_id||'—')+'  |  Location: '+(p.location||'—')+'  |  Last Purchase: '+(p.last_purchase||'—'),14,79);
+  doc.text('Status: '+(p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW STOCK':'OK')+'  |  Remark: '+(p.remark||'—'),14,86);
   doc.setFontSize(11);doc.setFont(undefined,'bold');doc.setTextColor(0,0,0);
-  doc.text('Issue History',14,89);
-  if(!ilist.length){
-    doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text('No issues recorded.',14,98);
-  }else{
-    const cols=[['#','Date','Issued To','Person ID','Qty','Unit','Issued By','Title','Remark']];
-    const rows=ilist.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.quantity,p.unit,i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
-    doc.autoTable({head:cols,body:rows,startY:93,styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[13,27,62],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:10,right:10}});
+  doc.text('Issue History',14,96);
+  if(!ilist.length){doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text('No issues recorded.',14,105);}
+  else{
+    const cols=[['#','Date','Issued To','Person ID','Rcvr Contact','Qty','Unit','Issued By','Title','Remark']];
+    const rows=ilist.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.issues?.receiver_contact||'',i.quantity,p.unit,i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);
+    doc.autoTable({head:cols,body:rows,startY:100,styles:{fontSize:7.5,cellPadding:2.5},headStyles:{fillColor:[13,27,62],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:10,right:10}});
     const ti=ilist.reduce((s,i)=>s+(+i.quantity),0);
     doc.setFontSize(8);doc.setTextColor(60,60,60);
     doc.text('Total Issued: '+ti+' '+p.unit,14,doc.lastAutoTable.finalY+8);
   }
-  pdfFooter(doc);
+  pdfFooter(doc,false);
   doc.save('Ajanta_product_'+p.item_code+'_'+today+'.pdf');
   setMsg('rmsg','✓ PDF downloaded!','#4ade80');
 }
@@ -599,7 +704,7 @@ sb.channel('realtime-inv')
   .subscribe();
 
 document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
-loadAll();
+loadAC().then(()=>loadAll());
 </script>
 </body>
 </html>
