@@ -693,8 +693,16 @@ async function doRegister() {
 async function loadProfile() {
   const userId = state.session.user?.id;
   const r = await api(`/rest/v1/profiles?id=eq.${userId}&select=*`, 'GET', null, state.session.access_token);
-  if (r.ok && r.data.length) state.profile = r.data[0];
-  else state.profile = { name: state.session.user?.email, role: 'user' };
+  if (r.ok && r.data.length) {
+    state.profile = r.data[0];
+  } else {
+    // Try by email
+    const email = state.session.user?.email;
+    const r2 = await api(`/rest/v1/profiles?email=eq.${email}&select=*`, 'GET', null, state.session.access_token);
+    if (r2.ok && r2.data.length) state.profile = r2.data[0];
+    else state.profile = { name: email, role: 'user', email };
+  }
+  console.log('Profile loaded:', state.profile);
 }
 
 async function doLogout() {
@@ -739,8 +747,9 @@ async function initApp() {
 
   // Hide admin for non-admins
   const isAdmin = state.profile?.role === 'admin';
-  document.getElementById('admin-nav-section').style.display = isAdmin ? '' : 'none';
-  document.getElementById('admin-nav-btn').style.display = isAdmin ? '' : 'none';
+  console.log('Is admin:', isAdmin, 'Role:', state.profile?.role);
+  document.getElementById('admin-nav-section').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('admin-nav-btn').style.display = isAdmin ? 'flex' : 'none';
 
   await loadItems();
   if (isAdmin) await loadUsers();
