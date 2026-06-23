@@ -539,6 +539,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Receiver Contact *</label><input id="mdr-rcon" placeholder="+966 5xx xxx xxxx"/></div>
       <div class="fl"><label>Issued By</label><input id="mdr-by" placeholder="Name" oninput="acShow(this,'issued_by','ac-mby')" onblur="acHide('ac-mby')" onfocus="acShow(this,'issued_by','ac-mby')"/><div class="ac-list" id="ac-mby"></div></div>
       <div class="fl"><label>Issue Date</label><input id="mdr-date" type="date"/></div>
+      <div class="fl"><label>Equipment / Property No.</label><input id="mdr-eqno" placeholder="e.g. EQ-2024-001 (optional)"/></div>
       <div class="fl"><label>Remark</label><input id="mdr-rem" placeholder="Purpose / remark"/></div>
     </div>
     <div class="ct">◆ Items in this MDR</div>
@@ -985,7 +986,7 @@ async function saveMDR(){
   for(const r of rows){const iid=r.querySelector('.msel').value;const qty=parseFloat(r.querySelector('.mqty').value);if(!iid||!qty||qty<=0)continue;const item=S.tItems.find(x=>x.id===iid);if(!item)continue;if(qty>item.qty){setMsg('mdrmsg','Not enough stock for '+item.name+'! Available: '+item.qty,'#fca5a5');return;}items.push({iid,qty,item});}
   if(!items.length){setMsg('mdrmsg','Add at least one item!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const r1=await db('/rest/v1/mdr_records','POST',{mdr_no:mdrNo,from_site:from,to_location:document.getElementById('mdr-to').value.trim()||null,receiver_name:recv,receiver_contact:rcon,issued_by:document.getElementById('mdr-by').value.trim()||null,mdr_date:document.getElementById('mdr-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('mdr-rem').value.trim()||null,created_at:new Date().toISOString()},tok);
+  const r1=await db('/rest/v1/mdr_records','POST',{mdr_no:mdrNo,from_site:from,to_location:document.getElementById('mdr-to').value.trim()||null,receiver_name:recv,receiver_contact:rcon,issued_by:document.getElementById('mdr-by').value.trim()||null,mdr_date:document.getElementById('mdr-date').value||new Date().toISOString().split('T')[0],equipment_no:document.getElementById('mdr-eqno').value.trim()||null,remark:document.getElementById('mdr-rem').value.trim()||null,created_at:new Date().toISOString()},tok);
   if(!r1.ok){setMsg('mdrmsg','Error saving MDR','#fca5a5');return;}
   const mdrId=r1.data?.[0]?.id||r1.data?.id;
   for(const it of items){
@@ -996,7 +997,7 @@ async function saveMDR(){
   setMsg('mdrmsg','✓ MDR saved! Stock updated.','#4ade80');clearMDR();await loadTItems();await loadMDR();
 }
 
-function clearMDR(){['mdr-no','mdr-to','mdr-recv','mdr-rcon','mdr-by','mdr-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('mdr-from').value='';document.getElementById('mdr-date').value=new Date().toISOString().split('T')[0];document.getElementById('mdr-ilist').innerHTML='';addMDRRow();}
+function clearMDR(){['mdr-no','mdr-to','mdr-recv','mdr-rcon','mdr-by','mdr-rem','mdr-eqno'].forEach(id=>document.getElementById(id).value='');document.getElementById('mdr-from').value='';document.getElementById('mdr-date').value=new Date().toISOString().split('T')[0];document.getElementById('mdr-ilist').innerHTML='';addMDRRow();}
 
 function renderMDRTable(){
   document.getElementById('mdr-tb').innerHTML=S.mdrRecords.length?S.mdrRecords.map((m,n)=>`<tr>
