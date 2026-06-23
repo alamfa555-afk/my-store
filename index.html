@@ -335,6 +335,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Issued By *</label><input id="i-by" placeholder="Issuer full name" oninput="acShow(this,'issued_by','ac-iby')" onblur="acHide('ac-iby')" onfocus="acShow(this,'issued_by','ac-iby')"/><div class="ac-list" id="ac-iby"></div></div>
       <div class="fl"><label>Issuer Title *</label><select id="i-title"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
       <div class="fl"><label>Issue Date</label><input id="i-date" type="date"/></div>
+      <div class="fl"><label>Equipment / Property No.</label><input id="i-eqno" placeholder="e.g. EQ-2024-001 (optional)"/></div>
       <div class="fl"><label>Remark / Purpose</label><input id="i-rem" placeholder="Purpose of issue"/></div>
     </div>
     <div class="ct orange">◆ Select Items to Issue</div>
@@ -353,7 +354,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <button class="btn bv bsm" onclick="makePDF('allissue')">⬇ PDF</button>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Contact</th><th>Site</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
+      <thead><tr><th>#</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Contact</th><th>Site</th><th>Eq.No</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
       <tbody id="iss-tb"></tbody>
     </table></div>
   </div>
@@ -879,7 +880,7 @@ function addIRow(){const opts='<option value="">-- Select Product --</option>'+S
 function renderIssueTable(){
   document.getElementById('iss-tb').innerHTML=S.issues.length?S.issues.map((i,n)=>`<tr>
     <td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.person_id||'—'}</td>
-    <td>${i.issues?.receiver_contact||'—'}</td><td>${i.issues?.issue_site||'—'}</td>
+    <td>${i.issues?.receiver_contact||'—'}</td><td>${i.issues?.issue_site||'—'}</td><td>${i.issues?.equipment_no||'—'}</td>
     <td><b>${i.products?.item_code||'—'}</b></td><td>${i.products?.description||'—'}</td>
     <td>${i.quantity}</td><td>${i.products?.unit||'—'}</td>
     <td>${i.issues?.issued_by||'—'}</td><td>${i.issues?.issued_by_title||'—'}</td><td>${i.issues?.remark||'—'}</td>
@@ -893,7 +894,7 @@ async function saveIssue(){
   for(const r of rows){const pid=r.querySelector('.isel').value;const qty=parseFloat(r.querySelector('.iqty').value);if(!pid||!qty||qty<=0)continue;const p=S.prods.find(x=>x.id===pid);if(!p)continue;if(qty>p.quantity){setMsg('imsg','Not enough stock for '+p.item_code+'! Available: '+p.quantity,'#fca5a5');return;}items.push({pid,qty,prod:p});}
   if(!items.length){setMsg('imsg','Add at least one item!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const r1=await db('/rest/v1/issues','POST',{issued_to:to,issued_by:by,issued_by_title:title,person_id:document.getElementById('i-pid').value.trim()||null,receiver_contact:document.getElementById('i-rcon').value.trim()||null,issue_site:issueSite||null,issue_date:document.getElementById('i-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('i-rem').value.trim()||null},tok);
+  const r1=await db('/rest/v1/issues','POST',{issued_to:to,issued_by:by,issued_by_title:title,person_id:document.getElementById('i-pid').value.trim()||null,receiver_contact:document.getElementById('i-rcon').value.trim()||null,issue_site:issueSite||null,equipment_no:document.getElementById('i-eqno').value.trim()||null,issue_date:document.getElementById('i-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('i-rem').value.trim()||null},tok);
   if(!r1.ok){setMsg('imsg','Error creating issue','#fca5a5');return;}
   const issueId=r1.data?.[0]?.id||r1.data?.id;
   for(const it of items){
@@ -911,7 +912,7 @@ async function saveIssue(){
   setMsg('imsg','✓ Items issued! Stock updated.','#4ade80');clearIssue();await loadAll();await loadTItems();
 }
 
-function clearIssue(){['i-to','i-by','i-pid','i-rcon','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-site').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
+function clearIssue(){['i-to','i-by','i-pid','i-rcon','i-rem','i-eqno'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-site').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
 
 // RECEIVE
 async function saveReceive(){
