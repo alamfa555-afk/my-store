@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ajanta Construction — Inventory</title>
+<title>Ajanta Construction — Inventory Management</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -11,112 +11,116 @@
 <style>
 :root{--bg:#0a0f1e;--surf:#0d1b3e;--card:#0f2040;--bdr:#1e3a8a;--acc:#f97316;--blue:#3b82f6;--green:#4ade80;--red:#ef4444;--yellow:#fde68a;--text:#e2e8f0;--muted:#64748b;--font:'Segoe UI',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font)}
 
 /* AUTH */
-#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 0%,#1e2a4a 0%,#0a0f1e 70%)}
-.auth-box{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
-.auth-logo{text-align:center;margin-bottom:28px}
-.auth-logo .aico{font-size:44px}
-.auth-logo h1{font-size:20px;font-weight:800;color:var(--acc);margin-top:8px;letter-spacing:1px}
-.auth-logo p{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:2px}
-.auth-tabs{display:flex;gap:0;margin-bottom:24px;background:var(--card);border-radius:8px;padding:4px}
-.auth-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--muted);border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+#auth-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 0%,#1e2a4a 0%,#0a0f1e 70%);z-index:999;overflow-y:auto}
+.auth-box{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:36px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.6);margin:20px}
+.auth-logo{text-align:center;margin-bottom:22px}
+.auth-logo .aico{font-size:40px}
+.auth-logo h1{font-size:18px;font-weight:800;color:var(--acc);margin-top:6px;letter-spacing:1px}
+.auth-logo p{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:2px}
+.auth-tabs{display:flex;margin-bottom:20px;background:var(--card);border-radius:8px;padding:3px}
+.auth-tab{flex:1;padding:7px;border:none;background:transparent;color:var(--muted);border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
 .auth-tab.active{background:var(--acc);color:#000}
-.aform{display:flex;flex-direction:column;gap:13px}
-.fg1{display:flex;flex-direction:column;gap:5px}
-.fg1 label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.fg1 input,.fg1 select{padding:10px 13px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-size:13px;outline:none;transition:border .2s}
+.aform{display:flex;flex-direction:column;gap:11px}
+.fg1{display:flex;flex-direction:column;gap:4px}
+.fg1 label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.fg1 input,.fg1 select{padding:9px 12px;background:var(--card);border:1px solid var(--bdr);border-radius:7px;color:var(--text);font-size:13px;outline:none}
 .fg1 input:focus,.fg1 select:focus{border-color:var(--acc)}
-.abtn{padding:12px;background:var(--acc);border:none;border-radius:8px;color:#000;font-weight:800;font-size:14px;cursor:pointer;transition:opacity .2s;margin-top:4px}
+.abtn{padding:11px;background:var(--acc);border:none;border-radius:8px;color:#000;font-weight:800;font-size:13px;cursor:pointer;margin-top:4px}
 .abtn:hover{opacity:.85}
-.amsg{font-size:12px;text-align:center;min-height:18px;margin-top:6px}
+.amsg{font-size:12px;text-align:center;min-height:16px;margin-top:4px}
 .amsg.err{color:var(--red)}.amsg.ok{color:var(--green)}
 
-/* TOPBAR */
-#app{display:none}
-.topbar{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.tbrand{display:flex;align-items:center;gap:10px}
-.tlogo{width:38px;height:38px;background:var(--bdr);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:var(--acc);border:2px solid var(--acc)}
-.tname{font-size:14px;font-weight:800;color:#fff;letter-spacing:.5px}
-.tsub{font-size:9px;color:#93c5fd;letter-spacing:2px}
-.tright{display:flex;align-items:center;gap:10px}
-.ubadge{background:var(--card);border:1px solid var(--bdr);padding:5px 11px;border-radius:20px;font-size:12px;color:var(--muted)}
+/* APP LAYOUT - NO SCROLL */
+#app{display:none;height:100vh;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100}
+.tbrand{display:flex;align-items:center;gap:8px}
+.tlogo{width:32px;height:32px;background:var(--bdr);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:var(--acc);border:2px solid var(--acc)}
+.tname{font-size:13px;font-weight:800;color:#fff}
+.tsub{font-size:8px;color:#93c5fd;letter-spacing:1.5px}
+.tright{display:flex;align-items:center;gap:8px}
+.ubadge{background:var(--card);border:1px solid var(--bdr);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--muted)}
 .ubadge span{color:var(--text);font-weight:700}
-.nbell{position:relative;cursor:pointer;background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:7px 9px;font-size:16px}
-.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;width:17px;height:17px;font-size:10px;display:none;align-items:center;justify-content:center;font-weight:700}
-.blogout{padding:7px 13px;background:transparent;border:1px solid var(--bdr);border-radius:7px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s}
+.nbell{position:relative;cursor:pointer;background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:6px 8px;font-size:14px}
+.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700}
+.blogout{padding:5px 11px;background:transparent;border:1px solid var(--bdr);border-radius:7px;color:var(--muted);font-size:11px;cursor:pointer}
 .blogout:hover{border-color:var(--red);color:var(--red)}
+.live{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green);font-weight:700}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
-/* LAYOUT */
-.layout{display:flex;min-height:calc(100vh - 58px)}
-.sidebar{width:230px;background:var(--surf);border-right:1px solid var(--bdr);padding:16px 10px;display:flex;flex-direction:column;gap:2px;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto}
-.nsec{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:10px 10px 4px;margin-top:4px}
-
-/* COLUMN A = STORE (orange) | COLUMN B = SITES (blue) */
-.nsec.store{color:var(--acc);border-left:3px solid var(--acc);padding-left:8px}
-.nsec.sites{color:#63b3ed;border-left:3px solid #63b3ed;padding-left:8px}
-
-.nitem{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;transition:all .2s;border:none;background:transparent;text-align:left;width:100%}
+/* MAIN AREA */
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:210px;background:var(--surf);border-right:1px solid var(--bdr);padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto;flex-shrink:0}
+.nsec{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 8px 3px;margin-top:2px}
+.nsec.store{color:var(--acc);border-left:3px solid var(--acc);padding-left:6px}
+.nsec.sites{color:#63b3ed;border-left:3px solid #63b3ed;padding-left:6px}
+.nitem{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;transition:all .15s;border:none;background:transparent;text-align:left;width:100%}
 .nitem:hover{background:var(--card);color:var(--text)}
 .nitem.active-store{background:rgba(249,115,22,.12);color:var(--acc)}
 .nitem.active-sites{background:rgba(59,130,246,.12);color:#63b3ed}
-.nico{font-size:15px;width:20px;text-align:center}
+.nico{font-size:13px;width:18px;text-align:center}
+.divider{width:100%;height:1px;background:var(--bdr);margin:5px 0}
+.main{flex:1;overflow-y:auto;padding:14px;background:var(--bg)}
 
-.main{flex:1;padding:20px;overflow-x:hidden}
+/* PANELS */
 .panel{display:none}.panel.active{display:block}
-.ph{margin-bottom:20px}
-.ph h2{font-size:20px;font-weight:800}
-.ph p{color:var(--muted);font-size:13px;margin-top:3px}
+.ph{margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ph h2{font-size:16px;font-weight:800}
+.ph p{color:var(--muted);font-size:11px}
 
-/* STATS */
-.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.sc{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:16px;transition:border-color .2s;cursor:pointer}
-.sc:hover{border-color:var(--blue)}
+/* DASHBOARD GRID - FITS SCREEN */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:10px}
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sc{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px}
 .sc.red{border-color:#7f1d1d;background:#1a0808}.sc.yel{border-color:#92400e;background:#1a1208}.sc.grn{border-color:#065f46;background:#081a10}
-.sico{font-size:24px;margin-bottom:6px}
-.sv{font-size:28px;font-weight:800;color:#fff}
-.sl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.sico{font-size:18px;margin-bottom:3px}
+.sv{font-size:22px;font-weight:800;color:#fff}
+.sl{font-size:9px;color:var(--muted);margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
 
 /* CARD */
-.card{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:16px;margin-bottom:16px}
-.ct{font-size:11px;font-weight:800;color:#63b3ed;margin-bottom:14px;letter-spacing:.5px;text-transform:uppercase}
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:10px}
+.ct{font-size:10px;font-weight:800;color:#63b3ed;margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase}
 .ct.orange{color:var(--acc)}
 
-/* FORM GRID */
-.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
-.fl{display:flex;flex-direction:column;gap:4px;position:relative}
-.fl label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.fl input,.fl select{background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;width:100%}
+/* FORM */
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.fl{display:flex;flex-direction:column;gap:3px;position:relative}
+.fl label{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.fl input,.fl select,.fl textarea{background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 9px;color:var(--text);font-size:12px;outline:none;width:100%}
 .fl input:focus,.fl select:focus{border-color:var(--blue)}
 .fl select option{background:#080e1e}
 
 /* AUTOCOMPLETE */
-.ac-list{position:absolute;top:100%;left:0;right:0;background:var(--surf);border:1px solid var(--blue);border-radius:0 0 8px 8px;z-index:200;max-height:160px;overflow-y:auto;display:none}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:var(--surf);border:1px solid var(--blue);border-radius:0 0 7px 7px;z-index:200;max-height:130px;overflow-y:auto;display:none}
 .ac-list.show{display:block}
-.ac-item{padding:7px 10px;font-size:12px;cursor:pointer;color:var(--text);border-bottom:1px solid var(--bdr)}
-.ac-item:hover{background:var(--bdr);color:#fff}
+.ac-item{padding:6px 9px;font-size:11px;cursor:pointer;color:var(--text);border-bottom:1px solid var(--bdr)}
+.ac-item:hover{background:var(--bdr)}
 
 /* BUTTONS */
-.br{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.btn{padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;transition:.2s}
+.br{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn{padding:7px 13px;border-radius:7px;border:none;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.3px;transition:.2s;white-space:nowrap}
 .bp{background:#1d4ed8;color:#fff}.bp:hover{background:#1e40af}
 .bs{background:#065f46;color:#fff}.bs:hover{background:#064e3b}
 .bd{background:#991b1b;color:#fff}.bd:hover{background:#7f1d1d}
 .bo{background:#c2410c;color:#fff}.bo:hover{background:#9a3412}
 .bv{background:#6d28d9;color:#fff}.bv:hover{background:#5b21b6}
 .ba{background:var(--acc);color:#000}.ba:hover{opacity:.85}
-.bsm{padding:6px 11px;font-size:11px}
-.msg{font-size:11px;margin-top:8px;min-height:16px;font-weight:600;padding:4px 0}
+.bg{background:#065f46;color:#fff}.bg:hover{background:#064e3b}
+.bsm{padding:5px 10px;font-size:10px}
+.msg{font-size:11px;margin-top:6px;min-height:14px;font-weight:600}
 
 /* TABLE */
-.tw{overflow-x:auto;border-radius:10px;border:1px solid var(--bdr)}
-table{width:100%;border-collapse:collapse;font-size:11px;min-width:600px}
-thead{background:#0a1628}
-th{padding:9px 8px;text-align:left;color:#93c5fd;font-weight:700;letter-spacing:.5px;white-space:nowrap;font-size:10px;text-transform:uppercase}
-td{padding:8px 8px;border-top:1px solid #0f2040;color:#cbd5e1;white-space:nowrap}
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--bdr);max-height:320px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:500px}
+thead{background:#0a1628;position:sticky;top:0;z-index:5}
+th{padding:7px 8px;text-align:left;color:#93c5fd;font-weight:700;letter-spacing:.3px;white-space:nowrap;font-size:9px;text-transform:uppercase}
+td{padding:6px 8px;border-top:1px solid #0f2040;color:#cbd5e1;white-space:nowrap}
 tr:hover td{background:#0f2040}
-.bk{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.bk{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700}
 .bk-ok{background:#0a2e1a;color:#4ade80;border:1px solid #065f46}
 .bk-lw{background:#3b2000;color:#fde68a;border:1px solid #92400e}
 .bk-no{background:#3b0f0f;color:#fca5a5;border:1px solid #7f1d1d}
@@ -124,63 +128,73 @@ tr:hover td{background:#0f2040}
 .bk-s{background:rgba(59,130,246,.15);color:#63b3ed;border:1px solid #1e3a8a}
 
 /* ALERTS */
-.alerts{margin-bottom:14px}
-.al{padding:8px 12px;border-radius:8px;font-size:11px;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.al{padding:6px 10px;border-radius:7px;font-size:11px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .al.r{background:#3b0f0f;border:1px solid #7f1d1d;color:#fca5a5}
 .al.y{background:#3b2000;border:1px solid #92400e;color:#fde68a}
 .al.g{background:#0a2e1a;border:1px solid #065f46;color:#4ade80}
 
 /* ISSUE ROW */
-.ir{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
-.ir select,.ir input{background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:7px 9px;color:var(--text);font-size:12px;outline:none}
-.ir select{flex:2;min-width:180px}
-.ir input{width:90px}
+.ir{display:flex;gap:5px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.ir select,.ir input{background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none}
+.ir select{flex:2;min-width:160px}
+.ir input{width:80px}
 
 /* SITE TABS */
-.stabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.stab{padding:8px 16px;border-radius:8px;border:1px solid var(--bdr);background:var(--card);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.stabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+.stab{padding:6px 14px;border-radius:7px;border:1px solid var(--bdr);background:var(--card);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
 .stab.active{background:#1e3a8a;border-color:#3b82f6;color:#fff}
 
-/* CHART */
-.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin-bottom:20px}
-.cc{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:16px}
-.cc h4{font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text)}
-.cw{position:relative;height:240px}
+/* CHARTS */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.cc{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px}
+.cc h4{font-size:12px;font-weight:700;margin-bottom:10px}
+.cw{position:relative;height:200px}
 
 /* NOTIF */
-.nlist{display:flex;flex-direction:column;gap:10px}
-.ni{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.nlist{display:flex;flex-direction:column;gap:8px}
+.ni{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:10px 13px;display:flex;align-items:center;gap:10px}
 .ni.crit{border-left:3px solid var(--red)}.ni.warn{border-left:3px solid var(--yellow)}
-.niico{font-size:20px;flex-shrink:0}
-.nib p{font-size:13px;font-weight:700}.nib span{font-size:12px;color:var(--muted)}
+.niico{font-size:18px;flex-shrink:0}
+.nib p{font-size:12px;font-weight:700}.nib span{font-size:11px;color:var(--muted)}
 
 /* ADMIN */
-.admgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.acard{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:16px}
-.acard h4{font-size:13px;font-weight:700;margin-bottom:14px}
-.urow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr)}
+.admgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.acard{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px}
+.acard h4{font-size:12px;font-weight:700;margin-bottom:12px}
+.urow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr)}
 .urow:last-child{border-bottom:none}
-.ui p{font-size:13px;font-weight:700}.ui span{font-size:11px;color:var(--muted)}
-.rbadge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.ui p{font-size:12px;font-weight:700}.ui span{font-size:10px;color:var(--muted)}
+.rbadge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
 .radmin{background:rgba(249,115,22,.15);color:var(--acc)}
 .ruser{background:rgba(59,130,246,.15);color:#63b3ed}
 .rviewer{background:rgba(100,116,139,.15);color:var(--muted)}
 
-/* DIVIDER between store and sites */
-.col-divider{width:100%;height:1px;background:var(--bdr);margin:8px 0}
+/* BALANCE SHEET */
+.balance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.bal-card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px;text-align:center}
+.bal-card .bv2{font-size:20px;font-weight:800;margin:4px 0}
+.bal-card .bl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.bal-card.in{border-color:#065f46;background:#081a10}
+.bal-card.out{border-color:#7f1d1d;background:#1a0808}
+.bal-card.bal{border-color:#92400e;background:#1a1208}
 
-/* LIVE DOT */
-.live{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);font-weight:700}
-.ldot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:16px}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:22px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto}
+.modal-box h3{font-size:15px;font-weight:800;margin-bottom:14px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 
 input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:pointer}
-@media(max-width:768px){.sidebar{display:none}.admgrid{grid-template-columns:1fr}.cgrid{grid-template-columns:1fr}.sg{grid-template-columns:repeat(2,1fr)}}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}
+@media(max-width:768px){.sidebar{display:none}.admgrid{grid-template-columns:1fr}.dash-stats{grid-template-columns:repeat(2,1fr)}.balance-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ═══ AUTH ═══════════════════════════════════ -->
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">
@@ -193,23 +207,23 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <button class="auth-tab" onclick="switchTab('register',this)">Register</button>
     </div>
     <div id="login-form" class="aform">
-      <div class="fg1"><label>Email</label><input type="email" id="le" placeholder="aapka@email.com"/></div>
+      <div class="fg1"><label>Email</label><input type="email" id="le" placeholder="your@email.com"/></div>
       <div class="fg1"><label>Password</label><input type="password" id="lp" placeholder="Password"/></div>
-      <button class="abtn" onclick="doLogin()">Login Karein</button>
+      <button class="abtn" onclick="doLogin()">Login</button>
       <div class="amsg" id="lmsg"></div>
     </div>
     <div id="register-form" class="aform" style="display:none">
-      <div class="fg1"><label>Invite Code</label><input type="text" id="ri" placeholder="Admin se code lein"/></div>
-      <div class="fg1"><label>Naam</label><input type="text" id="rn" placeholder="Aapka naam"/></div>
-      <div class="fg1"><label>Email</label><input type="email" id="re" placeholder="aapka@email.com"/></div>
+      <div class="fg1"><label>Invite Code</label><input type="text" id="ri" placeholder="Get code from Admin"/></div>
+      <div class="fg1"><label>Full Name</label><input type="text" id="rn" placeholder="Your name"/></div>
+      <div class="fg1"><label>Email</label><input type="email" id="re" placeholder="your@email.com"/></div>
       <div class="fg1"><label>Password</label><input type="password" id="rp" placeholder="Min 6 characters"/></div>
-      <button class="abtn" onclick="doRegister()">Account Banayein</button>
+      <button class="abtn" onclick="doRegister()">Create Account</button>
       <div class="amsg" id="rmsg"></div>
     </div>
   </div>
 </div>
 
-<!-- ═══ APP ════════════════════════════════════ -->
+<!-- APP -->
 <div id="app">
   <div class="topbar">
     <div class="tbrand">
@@ -218,78 +232,78 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     </div>
     <div class="tright">
       <div class="live"><div class="ldot"></div>LIVE</div>
-      <div class="ubadge">Salaam, <span id="cur-user">—</span></div>
-      <div class="nbell" onclick="showPanel('notifications')">🔔<div class="nbadge" id="nbadge">0</div></div>
+      <div class="ubadge">Welcome, <span id="cur-user">—</span></div>
+      <div class="nbell" onclick="showPanel('t-notif',null)">🔔<div class="nbadge" id="nbadge">0</div></div>
       <button class="blogout" onclick="doLogout()">Logout</button>
     </div>
   </div>
 
   <div class="layout">
-    <!-- SIDEBAR -->
     <nav class="sidebar">
-      <!-- COLUMN A: STORE -->
       <div class="nsec store">🛒 STORE</div>
-      <button class="nitem" onclick="showPanel('s-dash')"><span class="nico">📊</span> Dashboard</button>
-      <button class="nitem" onclick="showPanel('s-prod')"><span class="nico">📦</span> Product Entry</button>
-      <button class="nitem" onclick="showPanel('s-issue')"><span class="nico">📤</span> Issue Items</button>
-      <button class="nitem" onclick="showPanel('s-stock')"><span class="nico">🗃️</span> Stock View</button>
-      <button class="nitem" onclick="showPanel('s-rpt')"><span class="nico">📋</span> Reports / PDF</button>
-
-      <div class="col-divider"></div>
-
-      <!-- COLUMN B: SITES -->
+      <button class="nitem active-store" onclick="showPanel('s-dash',this)"><span class="nico">📊</span> Dashboard</button>
+      <button class="nitem" onclick="showPanel('s-prod',this)"><span class="nico">📦</span> Product Entry</button>
+      <button class="nitem" onclick="showPanel('s-issue',this)"><span class="nico">📤</span> Issue Items</button>
+      <button class="nitem" onclick="showPanel('s-recv',this)"><span class="nico">📥</span> Receive Stock</button>
+      <button class="nitem" onclick="showPanel('s-stock',this)"><span class="nico">🗃️</span> Stock View</button>
+      <button class="nitem" onclick="showPanel('s-balance',this)"><span class="nico">⚖️</span> Balance Sheet</button>
+      <button class="nitem" onclick="showPanel('s-rpt',this)"><span class="nico">📋</span> Reports</button>
+      <div class="divider"></div>
       <div class="nsec sites">🏗️ SITES</div>
-      <button class="nitem" onclick="showPanel('t-dash')"><span class="nico">📊</span> Dashboard</button>
-      <button class="nitem" onclick="showPanel('t-inv')"><span class="nico">📦</span> Inventory</button>
-      <button class="nitem" onclick="showPanel('t-sites')"><span class="nico">🏢</span> Site Wise</button>
-      <button class="nitem" onclick="showPanel('t-charts')"><span class="nico">📈</span> Charts</button>
-      <button class="nitem" onclick="showPanel('t-notif')"><span class="nico">🔔</span> Notifications</button>
-
-      <div class="col-divider"></div>
-
-      <!-- ADMIN -->
+      <button class="nitem" onclick="showPanel('t-dash',this)"><span class="nico">📊</span> Dashboard</button>
+      <button class="nitem" onclick="showPanel('t-inv',this)"><span class="nico">📦</span> Inventory</button>
+      <button class="nitem" onclick="showPanel('t-sites',this)"><span class="nico">🏢</span> Site Wise</button>
+      <button class="nitem" onclick="showPanel('t-issue',this)"><span class="nico">📤</span> Site Issue (MDR)</button>
+      <button class="nitem" onclick="showPanel('t-charts',this)"><span class="nico">📈</span> Charts</button>
+      <button class="nitem" onclick="showPanel('t-notif',this)"><span class="nico">🔔</span> Notifications</button>
+      <div class="divider"></div>
       <div class="nsec" id="admin-sec">⚙️ ADMIN</div>
-      <button class="nitem" onclick="showPanel('t-admin')" id="admin-btn"><span class="nico">👥</span> User Management</button>
+      <button class="nitem" onclick="showPanel('t-admin',this)" id="admin-btn"><span class="nico">👥</span> User Management</button>
     </nav>
 
     <main class="main">
 
-<!-- ══════════════════════════════════════════════
-     STORE PANELS
-══════════════════════════════════════════════ -->
-
-<!-- STORE DASHBOARD -->
+<!-- ═══ STORE DASHBOARD ═══ -->
 <div class="panel active" id="panel-s-dash">
-  <div class="ph"><h2>🛒 Store Dashboard</h2><p>Ajanta Construction — Store Inventory Overview</p></div>
-  <div class="sg" id="s-stat-grid"></div>
-  <div class="alerts" id="s-alert-box"></div>
-  <div class="card">
-    <div class="ct orange">◆ Recent Products</div>
-    <div class="tw"><table>
-      <thead><tr><th>#</th><th>Code</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Status</th></tr></thead>
-      <tbody id="s-dash-tb"><tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
-    </table></div>
+  <div class="ph"><div><h2>🛒 Store Dashboard</h2><p>Store inventory overview — auto updated</p></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn bp bsm" onclick="showPanel('s-prod',null)">+ Add Product</button>
+      <button class="btn ba bsm" onclick="showPanel('s-issue',null)">📤 Issue</button>
+    </div>
+  </div>
+  <div class="dash-stats" id="s-stat-grid" style="margin-bottom:10px"></div>
+  <div class="balance-grid" id="s-balance-mini"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="card" style="margin:0">
+      <div class="ct orange">◆ Low Stock Alerts</div>
+      <div id="s-alert-box"></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="ct orange">◆ Recent Activity</div>
+      <div id="s-recent" style="max-height:180px;overflow-y:auto"></div>
+    </div>
   </div>
 </div>
 
-<!-- STORE PRODUCT ENTRY -->
+<!-- ═══ STORE PRODUCT ENTRY ═══ -->
 <div class="panel" id="panel-s-prod">
-  <div class="ph"><h2>📦 Product Entry</h2><p>Naya product add karein ya edit karein</p></div>
+  <div class="ph"><h2>📦 Product Entry</h2><p>Add or edit store products</p></div>
   <div class="card">
     <div class="ct orange">◆ Add / Edit Product</div>
     <input type="hidden" id="edit-id"/>
     <div class="fg">
-      <div class="fl"><label>Item Code *</label><input id="f-code" placeholder="e.g. ITM-001" autocomplete="off" oninput="acShow(this,'item_code','ac-code')" onblur="acHide('ac-code')" onfocus="acShow(this,'item_code','ac-code')"/><div class="ac-list" id="ac-code"></div></div>
-      <div class="fl"><label>Invoice No</label><input id="f-invoice" placeholder="e.g. INV-2024-001" autocomplete="off" oninput="acShow(this,'invoice_no','ac-invoice')" onblur="acHide('ac-invoice')" onfocus="acShow(this,'invoice_no','ac-invoice')"/><div class="ac-list" id="ac-invoice"></div></div>
-      <div class="fl"><label>Description *</label><input id="f-desc" placeholder="Product description" autocomplete="off" oninput="acShow(this,'description','ac-desc')" onblur="acHide('ac-desc')" onfocus="acShow(this,'description','ac-desc')"/><div class="ac-list" id="ac-desc"></div></div>
-      <div class="fl"><label>Unit *</label><select id="f-unit"><option value="">-- Select --</option><option>Pcs</option><option>No.</option><option>Ltr</option><option>Mtr</option><option>Roll</option><option>Box</option><option>Sheet</option><option>Kg</option><option>Ton</option><option>Other</option></select></div>
+      <div class="fl"><label>Item Code *</label><input id="f-code" placeholder="e.g. ITM-001" oninput="acShow(this,'item_code','ac-code')" onblur="acHide('ac-code')" onfocus="acShow(this,'item_code','ac-code')"/><div class="ac-list" id="ac-code"></div></div>
+      <div class="fl"><label>Invoice No</label><input id="f-invoice" placeholder="INV-2024-001" oninput="acShow(this,'invoice_no','ac-inv')" onblur="acHide('ac-inv')" onfocus="acShow(this,'invoice_no','ac-inv')"/><div class="ac-list" id="ac-inv"></div></div>
+      <div class="fl"><label>Description *</label><input id="f-desc" placeholder="Product description" oninput="acShow(this,'description','ac-desc')" onblur="acHide('ac-desc')" onfocus="acShow(this,'description','ac-desc')"/><div class="ac-list" id="ac-desc"></div></div>
+      <div class="fl"><label>Unit *</label><select id="f-unit"><option value="">-- Select --</option><option>Pcs</option><option>No.</option><option>Ltr</option><option>Mtr</option><option>Roll</option><option>Box</option><option>Sheet</option><option>Kg</option><option>Ton</option><option>Set</option><option>Other</option></select></div>
       <div class="fl"><label>Price/Unit (SAR)</label><input id="f-price" type="number" placeholder="0.00" min="0" step="0.01"/></div>
       <div class="fl"><label>Quantity</label><input id="f-qty" type="number" placeholder="0" min="0"/></div>
-      <div class="fl"><label>Location</label><input id="f-loc" placeholder="Warehouse/Shelf" autocomplete="off" oninput="acShow(this,'location','ac-loc')" onblur="acHide('ac-loc')" onfocus="acShow(this,'location','ac-loc')"/><div class="ac-list" id="ac-loc"></div></div>
-      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" autocomplete="off" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
-      <div class="fl"><label>Supplier Contact</label><input id="f-supcon" placeholder="+966 5xx xxx xxxx" autocomplete="off" oninput="acShow(this,'supplier_contact','ac-supcon')" onblur="acHide('ac-supcon')" onfocus="acShow(this,'supplier_contact','ac-supcon')"/><div class="ac-list" id="ac-supcon"></div></div>
+      <div class="fl"><label>Equipment / Property No.</label><input id="f-eqno" placeholder="e.g. EQ-2024-001" oninput="acShow(this,'equipment_no','ac-eq')" onblur="acHide('ac-eq')" onfocus="acShow(this,'equipment_no','ac-eq')"/><div class="ac-list" id="ac-eq"></div></div>
+      <div class="fl"><label>Location</label><input id="f-loc" placeholder="Warehouse/Shelf" oninput="acShow(this,'location','ac-loc')" onblur="acHide('ac-loc')" onfocus="acShow(this,'location','ac-loc')"/><div class="ac-list" id="ac-loc"></div></div>
+      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
+      <div class="fl"><label>Supplier Contact</label><input id="f-supcon" placeholder="+966 5xx xxx xxxx" oninput="acShow(this,'supplier_contact','ac-scon')" onblur="acHide('ac-scon')" onfocus="acShow(this,'supplier_contact','ac-scon')"/><div class="ac-list" id="ac-scon"></div></div>
       <div class="fl"><label>Last Purchase Date</label><input id="f-date" type="date"/></div>
-      <div class="fl"><label>Receiver ID</label><input id="f-receiver" placeholder="e.g. EMP-001" autocomplete="off" oninput="acShow(this,'receiver_id','ac-receiver')" onblur="acHide('ac-receiver')" onfocus="acShow(this,'receiver_id','ac-receiver')"/><div class="ac-list" id="ac-receiver"></div></div>
+      <div class="fl"><label>Receiver ID</label><input id="f-receiver" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
       <div class="fl"><label>Status</label><select id="f-status"><option value="ok">OK</option><option value="damage">Damage</option><option value="reject">Reject</option><option value="expiry">Expiry</option></select></div>
       <div class="fl"><label>Remark</label><input id="f-rem" placeholder="Any remarks"/></div>
     </div>
@@ -302,30 +316,31 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct orange">◆ All Products</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Code</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Price</th><th>Qty</th><th>Location</th><th>Supplier</th><th>Contact</th><th>Receiver</th><th>Last Purchase</th><th>Status</th><th>Remark</th><th>Action</th></tr></thead>
-      <tbody id="prod-tb"><tr><td colspan="15" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Price</th><th>Qty</th><th>Location</th><th>Supplier</th><th>Contact</th><th>Receiver</th><th>Date</th><th>Status</th><th>Remark</th><th>Action</th></tr></thead>
+      <tbody id="prod-tb"></tbody>
     </table></div>
   </div>
 </div>
 
-<!-- STORE ISSUE ITEMS -->
+<!-- ═══ STORE ISSUE ═══ -->
 <div class="panel" id="panel-s-issue">
-  <div class="ph"><h2>📤 Issue Items</h2><p>Items issue karein — stock automatically update hoga</p></div>
+  <div class="ph"><h2>📤 Issue Items</h2><p>Issue items from store — stock auto updates</p></div>
   <div class="card">
     <div class="ct orange">◆ Issue Details</div>
     <div class="fg">
-      <div class="fl"><label>Issued To *</label><input id="i-to" placeholder="Person/Department" autocomplete="off" oninput="acShow(this,'issued_to','ac-ito')" onblur="acHide('ac-ito')" onfocus="acShow(this,'issued_to','ac-ito')"/><div class="ac-list" id="ac-ito"></div></div>
-      <div class="fl"><label>Person ID</label><input id="i-pid" placeholder="e.g. EMP-001" autocomplete="off" oninput="acShow(this,'person_id','ac-ipid')" onblur="acHide('ac-ipid')" onfocus="acShow(this,'person_id','ac-ipid')"/><div class="ac-list" id="ac-ipid"></div></div>
-      <div class="fl"><label>Receiver Contact</label><input id="i-rcon" placeholder="+966 5xx xxx xxxx" autocomplete="off" oninput="acShow(this,'receiver_contact','ac-ircon')" onblur="acHide('ac-ircon')" onfocus="acShow(this,'receiver_contact','ac-ircon')"/><div class="ac-list" id="ac-ircon"></div></div>
-      <div class="fl"><label>Issued By *</label><input id="i-by" placeholder="Issuer full name" autocomplete="off" oninput="acShow(this,'issued_by','ac-iby')" onblur="acHide('ac-iby')" onfocus="acShow(this,'issued_by','ac-iby')"/><div class="ac-list" id="ac-iby"></div></div>
-      <div class="fl"><label>Issuer Title *</label><select id="i-title"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Assistant Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
+      <div class="fl"><label>Issued To *</label><input id="i-to" placeholder="Person/Department" oninput="acShow(this,'issued_to','ac-ito')" onblur="acHide('ac-ito')" onfocus="acShow(this,'issued_to','ac-ito')"/><div class="ac-list" id="ac-ito"></div></div>
+      <div class="fl"><label>Person ID</label><input id="i-pid" placeholder="e.g. EMP-001" oninput="acShow(this,'person_id','ac-pid')" onblur="acHide('ac-pid')" onfocus="acShow(this,'person_id','ac-pid')"/><div class="ac-list" id="ac-pid"></div></div>
+      <div class="fl"><label>Receiver Contact</label><input id="i-rcon" placeholder="+966 5xx xxx xxxx"/></div>
+      <div class="fl"><label>Issue to Site</label><select id="i-site"><option value="">-- Store Only --</option></select></div>
+      <div class="fl"><label>Issued By *</label><input id="i-by" placeholder="Issuer full name" oninput="acShow(this,'issued_by','ac-iby')" onblur="acHide('ac-iby')" onfocus="acShow(this,'issued_by','ac-iby')"/><div class="ac-list" id="ac-iby"></div></div>
+      <div class="fl"><label>Issuer Title *</label><select id="i-title"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
       <div class="fl"><label>Issue Date</label><input id="i-date" type="date"/></div>
       <div class="fl"><label>Remark / Purpose</label><input id="i-rem" placeholder="Purpose of issue"/></div>
     </div>
-    <div class="ct orange" style="margin-top:4px">◆ Select Items</div>
+    <div class="ct orange">◆ Select Items to Issue</div>
     <div id="ilist"></div>
-    <div class="br" style="margin-top:10px">
-      <button class="btn bs" onclick="addIRow()">+ Add Item Row</button>
+    <div class="br">
+      <button class="btn bs bsm" onclick="addIRow()">+ Add Item Row</button>
       <button class="btn bp" onclick="saveIssue()">✓ Issue & Update Stock</button>
       <button class="btn bd" onclick="clearIssue()">✕ Clear</button>
     </div>
@@ -333,155 +348,267 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   </div>
   <div class="card">
     <div class="ct orange">◆ Issue History</div>
+    <div class="br" style="margin-bottom:8px">
+      <button class="btn bv bsm" onclick="exportIssueCSV()">⬇ CSV</button>
+      <button class="btn bv bsm" onclick="makePDF('allissue')">⬇ PDF</button>
+    </div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Rcvr Contact</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
-      <tbody id="iss-tb"><tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+      <thead><tr><th>#</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Contact</th><th>Site</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
+      <tbody id="iss-tb"></tbody>
     </table></div>
   </div>
 </div>
 
-<!-- STORE STOCK VIEW -->
+<!-- ═══ RECEIVE STOCK ═══ -->
+<div class="panel" id="panel-s-recv">
+  <div class="ph"><h2>📥 Receive Stock</h2><p>Add new stock — balance sheet auto updates</p></div>
+  <div class="card">
+    <div class="ct orange">◆ Stock Receipt Entry</div>
+    <div class="fg">
+      <div class="fl"><label>Select Product *</label><select id="rv-prod"><option value="">-- Select Product --</option></select></div>
+      <div class="fl"><label>Quantity Received *</label><input id="rv-qty" type="number" placeholder="0" min="1"/></div>
+      <div class="fl"><label>Invoice No</label><input id="rv-inv" placeholder="Invoice number"/></div>
+      <div class="fl"><label>Supplier</label><input id="rv-sup" placeholder="Supplier name" oninput="acShow(this,'supplier_name','ac-rvsup')" onblur="acHide('ac-rvsup')" onfocus="acShow(this,'supplier_name','ac-rvsup')"/><div class="ac-list" id="ac-rvsup"></div></div>
+      <div class="fl"><label>Price/Unit (SAR)</label><input id="rv-price" type="number" placeholder="0.00" step="0.01"/></div>
+      <div class="fl"><label>Received By</label><input id="rv-by" placeholder="Name"/></div>
+      <div class="fl"><label>Date</label><input id="rv-date" type="date"/></div>
+      <div class="fl"><label>Remark</label><input id="rv-rem" placeholder="Optional"/></div>
+    </div>
+    <div class="br">
+      <button class="btn bs" onclick="saveReceive()">✓ Receive & Update Stock</button>
+      <button class="btn bd" onclick="clearRecv()">✕ Clear</button>
+    </div>
+    <div class="msg" id="rvmsg"></div>
+  </div>
+  <div class="card">
+    <div class="ct orange">◆ Receipt History</div>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Date</th><th>Item Code</th><th>Description</th><th>Qty Received</th><th>Price/Unit</th><th>Total Value</th><th>Invoice</th><th>Supplier</th><th>Received By</th><th>Remark</th></tr></thead>
+      <tbody id="recv-tb"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ STOCK VIEW ═══ -->
 <div class="panel" id="panel-s-stock">
-  <div class="ph"><h2>🗃️ Stock View</h2><p>Poora store stock</p></div>
-  <div class="br" style="margin-bottom:14px">
+  <div class="ph"><h2>🗃️ Stock View</h2><p>Complete store stock overview</p></div>
+  <div class="br" style="margin-bottom:10px">
     <button class="btn bp bsm" onclick="renderStock('all')">All Stock</button>
     <button class="btn bs bsm" onclick="renderStock('ok')">In Stock</button>
     <button class="btn bo bsm" onclick="renderStock('low')">Low Stock</button>
     <button class="btn bd bsm" onclick="renderStock('out')">No Stock</button>
     <button class="btn bv bsm" onclick="renderStock('dmg')">Damage/Reject</button>
+    <button class="btn bg bsm" onclick="exportStockCSV()">⬇ CSV</button>
+    <button class="btn bv bsm" onclick="makePDF('stock')">⬇ PDF</button>
   </div>
   <div class="card">
     <div class="ct orange" id="stock-title">◆ All Stock</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Code</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price/Unit</th><th>Total Value</th><th>Supplier</th><th>Contact</th><th>Receiver</th><th>Location</th><th>Status</th></tr></thead>
-      <tbody id="stk-tb"><tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
+      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Total Value</th><th>Supplier</th><th>Contact</th><th>Receiver</th><th>Location</th><th>Status</th></tr></thead>
+      <tbody id="stk-tb"></tbody>
     </table></div>
   </div>
 </div>
 
-<!-- STORE REPORTS -->
+<!-- ═══ BALANCE SHEET ═══ -->
+<div class="panel" id="panel-s-balance">
+  <div class="ph"><h2>⚖️ Balance Sheet</h2><p>Store stock in/out — auto calculated</p></div>
+  <div class="balance-grid" id="bs-grid"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="card" style="margin:0">
+      <div class="ct orange">◆ Stock Received (IN)</div>
+      <div class="tw"><table>
+        <thead><tr><th>#</th><th>Date</th><th>Item</th><th>Qty IN</th><th>Value</th><th>Supplier</th></tr></thead>
+        <tbody id="bs-in-tb"></tbody>
+      </table></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="ct orange">◆ Stock Issued (OUT)</div>
+      <div class="tw"><table>
+        <thead><tr><th>#</th><th>Date</th><th>Item</th><th>Qty OUT</th><th>Issued To</th><th>Site</th></tr></thead>
+        <tbody id="bs-out-tb"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STORE REPORTS ═══ -->
 <div class="panel" id="panel-s-rpt">
-  <div class="ph"><h2>📋 Reports / PDF</h2><p>Daily, Weekly, Monthly reports download karein</p></div>
+  <div class="ph"><h2>📋 Reports</h2><p>PDF and CSV reports</p></div>
   <div class="card">
-    <div class="ct orange">◆ Generate PDF Reports</div>
-    <div class="br" style="flex-wrap:wrap;margin-bottom:14px">
-      <button class="btn bv" onclick="makePDF('daily')">📄 Daily Report</button>
-      <button class="btn bv" onclick="makePDF('weekly')">📄 Weekly Report</button>
-      <button class="btn bv" onclick="makePDF('monthly')">📄 Monthly Report</button>
-      <button class="btn bv" onclick="makePDF('stock')">📄 Full Stock Report</button>
-      <button class="btn bv" onclick="makePDF('allissue')">📄 All Issue Report</button>
+    <div class="ct orange">◆ PDF Reports</div>
+    <div class="br" style="flex-wrap:wrap">
+      <button class="btn bv" onclick="makePDF('daily')">📄 Daily Issue</button>
+      <button class="btn bv" onclick="makePDF('weekly')">📄 Weekly Issue</button>
+      <button class="btn bv" onclick="makePDF('monthly')">📄 Monthly Issue</button>
+      <button class="btn bv" onclick="makePDF('stock')">📄 Full Stock</button>
+      <button class="btn bv" onclick="makePDF('allissue')">📄 All Issues</button>
       <button class="btn bv" onclick="makePDF('lowstock')">📄 Low Stock Alert</button>
+      <button class="btn bv" onclick="makePDF('balance')">📄 Balance Sheet</button>
     </div>
-    <div class="fl" style="max-width:320px;margin-bottom:12px">
-      <label>Product-wise Report</label>
-      <select id="rpt-pid"><option value="">-- Select Product --</option></select>
+    <div class="ct orange" style="margin-top:14px">◆ CSV Reports</div>
+    <div class="br" style="flex-wrap:wrap">
+      <button class="btn bg" onclick="exportStockCSV()">⬇ Stock CSV</button>
+      <button class="btn bg" onclick="exportIssueCSV()">⬇ Issue CSV</button>
+      <button class="btn bg" onclick="exportRecvCSV()">⬇ Receipt CSV</button>
+      <button class="btn bg" onclick="exportBalanceCSV()">⬇ Balance CSV</button>
     </div>
-    <button class="btn bv" onclick="makeProdPDF()">📄 Product Report</button>
+    <div class="ct orange" style="margin-top:14px">◆ Product-wise PDF</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="rpt-pid" style="background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:7px 10px;color:var(--text);font-size:12px;outline:none;flex:1;min-width:200px"><option value="">-- Select Product --</option></select>
+      <button class="btn bv" onclick="makeProdPDF()">📄 Product Report</button>
+    </div>
     <div class="msg" id="rpt-msg"></div>
   </div>
-  <div class="card">
-    <div class="ct orange">◆ Issue Records</div>
-    <div class="tw"><table>
-      <thead><tr><th>#</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th></tr></thead>
-      <tbody id="rpt-tb"><tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">Loading...</td></tr></tbody>
-    </table></div>
-  </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     SITES PANELS
-══════════════════════════════════════════════ -->
-
-<!-- SITES DASHBOARD -->
+<!-- ═══ SITES DASHBOARD ═══ -->
 <div class="panel" id="panel-t-dash">
-  <div class="ph"><h2>🏗️ Sites Dashboard</h2><p>Site A, B, C, D, E — Overview</p></div>
-  <div class="sg" id="t-stat-grid"></div>
-  <div class="cgrid">
-    <div class="cc"><h4>🏢 Site-wise Stock</h4><div class="cw"><canvas id="dash-site-chart"></canvas></div></div>
-    <div class="cc"><h4>⚠️ Low Stock Items</h4><div id="t-low-list" style="padding:4px"></div></div>
+  <div class="ph"><div><h2>🏗️ Sites Dashboard</h2><p>All sites overview</p></div>
+    <button class="btn ba bsm" onclick="showPanel('t-inv',null)">+ Add Item</button>
+  </div>
+  <div class="dash-stats" id="t-stat-grid" style="margin-bottom:10px"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="card" style="margin:0">
+      <div class="ct">◆ Site-wise Stock</div>
+      <div class="cw" style="height:180px"><canvas id="dash-site-chart"></canvas></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="ct">◆ Low Stock Alerts</div>
+      <div id="t-low-list" style="max-height:180px;overflow-y:auto"></div>
+    </div>
   </div>
 </div>
 
-<!-- SITES INVENTORY -->
+<!-- ═══ SITES INVENTORY ═══ -->
 <div class="panel" id="panel-t-inv">
-  <div class="ph"><h2>📦 Sites Inventory</h2><p>Sab sites ka inventory</p></div>
+  <div class="ph"><h2>📦 Sites Inventory</h2><p>All sites combined inventory</p></div>
   <div class="card">
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <input type="search" id="t-search" placeholder="Item search..." style="flex:1;min-width:180px;background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:8px 10px;color:var(--text);font-size:13px;outline:none" oninput="renderTInv()"/>
-      <select id="t-site-f" style="background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:8px 10px;color:var(--text);font-size:13px;outline:none" onchange="renderTInv()">
-        <option value="">All Sites</option><option>Site A</option><option>Site B</option><option>Site C</option><option>Site D</option><option>Site E</option>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <input type="search" id="t-search" placeholder="Search items..." style="flex:1;min-width:150px;background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 9px;color:var(--text);font-size:12px;outline:none" oninput="renderTInv()"/>
+      <select id="t-site-f" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 9px;color:var(--text);font-size:12px;outline:none" onchange="renderTInv()">
+        <option value="">All Sites</option>
       </select>
-      <select id="t-stock-f" style="background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:8px 10px;color:var(--text);font-size:13px;outline:none" onchange="renderTInv()">
+      <select id="t-stock-f" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 9px;color:var(--text);font-size:12px;outline:none" onchange="renderTInv()">
         <option value="">All Stock</option><option value="low">Low Stock</option><option value="ok">OK</option>
       </select>
       <button class="btn ba bsm" onclick="openTModal()">+ Add Item</button>
       <button class="btn bp bsm" onclick="exportTExcel()">⬇ Excel</button>
+      <button class="btn bg bsm" onclick="exportTCSV()">⬇ CSV</button>
+      <button class="btn bv bsm" onclick="makeSitesPDF()">⬇ PDF</button>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Site</th><th>Qty</th><th>Unit</th><th>Min Stock</th><th>Status</th><th>Action</th></tr></thead>
+      <thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Eq.No</th><th>Site</th><th>Qty</th><th>Unit</th><th>Min Stock</th><th>Status</th><th>Action</th></tr></thead>
       <tbody id="t-inv-tb"></tbody>
     </table></div>
   </div>
 </div>
 
-<!-- SITES SITE WISE -->
+<!-- ═══ SITE WISE ═══ -->
 <div class="panel" id="panel-t-sites">
-  <div class="ph"><h2>🏢 Site Wise Inventory</h2><p>Har site ka alag stock</p></div>
-  <div class="stabs">
-    <button class="stab active" onclick="showSite('Site A',this)">Site A</button>
-    <button class="stab" onclick="showSite('Site B',this)">Site B</button>
-    <button class="stab" onclick="showSite('Site C',this)">Site C</button>
-    <button class="stab" onclick="showSite('Site D',this)">Site D</button>
-    <button class="stab" onclick="showSite('Site E',this)">Site E</button>
-  </div>
-  <div class="sg" id="site-stats"></div>
+  <div class="ph"><h2>🏢 Site Wise Inventory</h2><p>Individual site stock</p></div>
+  <div class="stabs" id="site-tabs-container"></div>
+  <div class="dash-stats" id="site-stats" style="margin-bottom:10px"></div>
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
       <div class="ct" id="site-title" style="margin:0">◆ Site A</div>
-      <button class="btn bp bsm" onclick="exportSiteExcel()">⬇ Site Excel</button>
+      <div class="br" style="margin:0">
+        <button class="btn bp bsm" onclick="exportSiteExcel()">⬇ Excel</button>
+        <button class="btn bg bsm" onclick="exportSiteCSV()">⬇ CSV</button>
+        <button class="btn bv bsm" onclick="makeSitePDF()">⬇ PDF</button>
+      </div>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Qty</th><th>Unit</th><th>Min Stock</th><th>Status</th></tr></thead>
+      <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Eq.No</th><th>Qty</th><th>Unit</th><th>Min Stock</th><th>Status</th></tr></thead>
       <tbody id="site-tb"></tbody>
     </table></div>
   </div>
 </div>
 
-<!-- SITES CHARTS -->
-<div class="panel" id="panel-t-charts">
-  <div class="ph"><h2>📈 Charts & Graphs</h2><p>Stock analysis aur trends</p></div>
-  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-    <select id="chart-month" style="background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:8px 10px;color:var(--text);font-size:13px;outline:none" onchange="renderCharts()">
-      <option value="0">January</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6">July</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option>
-    </select>
-    <button class="btn bp bsm" onclick="exportTExcel()">⬇ Full Excel</button>
+<!-- ═══ SITE ISSUE MDR ═══ -->
+<div class="panel" id="panel-t-issue">
+  <div class="ph"><h2>📤 Site Issue — MDR</h2><p>Material Delivery Record — track who received what</p></div>
+  <div class="card">
+    <div class="ct">◆ MDR Issue Entry</div>
+    <div class="fg">
+      <div class="fl"><label>MDR No. *</label><input id="mdr-no" placeholder="e.g. MDR-2024-001"/></div>
+      <div class="fl"><label>Issue From Site *</label><select id="mdr-from"><option value="">-- Select Site --</option></select></div>
+      <div class="fl"><label>Issue To Site / Location</label><input id="mdr-to" placeholder="Site B / Location"/></div>
+      <div class="fl"><label>Receiver Name *</label><input id="mdr-recv" placeholder="Full name" oninput="acShow(this,'issued_to','ac-mrecv')" onblur="acHide('ac-mrecv')" onfocus="acShow(this,'issued_to','ac-mrecv')"/><div class="ac-list" id="ac-mrecv"></div></div>
+      <div class="fl"><label>Receiver Contact *</label><input id="mdr-rcon" placeholder="+966 5xx xxx xxxx"/></div>
+      <div class="fl"><label>Issued By</label><input id="mdr-by" placeholder="Name" oninput="acShow(this,'issued_by','ac-mby')" onblur="acHide('ac-mby')" onfocus="acShow(this,'issued_by','ac-mby')"/><div class="ac-list" id="ac-mby"></div></div>
+      <div class="fl"><label>Issue Date</label><input id="mdr-date" type="date"/></div>
+      <div class="fl"><label>Remark</label><input id="mdr-rem" placeholder="Purpose / remark"/></div>
+    </div>
+    <div class="ct">◆ Items in this MDR</div>
+    <div id="mdr-ilist"></div>
+    <div class="br">
+      <button class="btn bs bsm" onclick="addMDRRow()">+ Add Item Row</button>
+      <button class="btn bp" onclick="saveMDR()">✓ Save MDR & Update Stock</button>
+      <button class="btn bd" onclick="clearMDR()">✕ Clear</button>
+    </div>
+    <div class="msg" id="mdrmsg"></div>
   </div>
-  <div class="cgrid">
-    <div class="cc"><h4>🏢 Site-wise Total Stock</h4><div class="cw"><canvas id="chart-site-bar"></canvas></div></div>
-    <div class="cc"><h4>📦 Category Distribution</h4><div class="cw"><canvas id="chart-cat-pie"></canvas></div></div>
-    <div class="cc" style="grid-column:1/-1"><h4>📅 Monthly Trend</h4><div class="cw" style="height:280px"><canvas id="chart-monthly"></canvas></div></div>
+  <div class="card">
+    <div class="ct">◆ MDR History</div>
+    <div class="br" style="margin-bottom:8px">
+      <button class="btn bg bsm" onclick="exportMDRCSV()">⬇ CSV</button>
+      <button class="btn bv bsm" onclick="makeMDRPDF()">⬇ PDF</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>MDR No</th><th>Date</th><th>From Site</th><th>To Site/Loc</th><th>Item</th><th>Eq.No</th><th>Qty</th><th>Unit</th><th>Receiver</th><th>Contact</th><th>Issued By</th><th>Remark</th></tr></thead>
+      <tbody id="mdr-tb"></tbody>
+    </table></div>
   </div>
 </div>
 
-<!-- SITES NOTIFICATIONS -->
+<!-- ═══ CHARTS ═══ -->
+<div class="panel" id="panel-t-charts">
+  <div class="ph"><h2>📈 Charts & Analytics</h2><p>Stock analysis</p></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <select id="chart-month" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 9px;color:var(--text);font-size:12px;outline:none" onchange="renderCharts()">
+      <option value="0">January</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6">July</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option>
+    </select>
+    <button class="btn bp bsm" onclick="exportTExcel()">⬇ Excel</button>
+  </div>
+  <div class="cgrid">
+    <div class="cc"><h4>🏢 Site-wise Stock (Bar)</h4><div class="cw"><canvas id="chart-site-bar"></canvas></div></div>
+    <div class="cc"><h4>📦 Monthly Trend (Bar)</h4><div class="cw"><canvas id="chart-monthly"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ═══ NOTIFICATIONS ═══ -->
 <div class="panel" id="panel-t-notif">
-  <div class="ph"><h2>🔔 Notifications</h2><p>Low stock aur system alerts</p></div>
+  <div class="ph"><h2>🔔 Notifications</h2><p>Low stock and system alerts</p></div>
   <div class="nlist" id="t-notif-list"></div>
 </div>
 
-<!-- ADMIN -->
+<!-- ═══ ADMIN ═══ -->
 <div class="panel" id="panel-t-admin">
-  <div class="ph"><h2>⚙️ User Management</h2><p>Users aur invite codes</p></div>
+  <div class="ph"><h2>⚙️ User Management</h2></div>
   <div class="admgrid">
-    <div class="acard"><h4>👥 Registered Users</h4><div id="user-list"></div></div>
     <div class="acard">
-      <h4>🔑 Invite Code Generate</h4>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Naaye user ke liye code banayein — 24 ghante valid</p>
-      <div class="fg1" style="margin-bottom:12px"><label>Role</label>
-        <select id="inv-role"><option value="user">User (add/edit)</option><option value="viewer">Viewer (sirf dekh sakta)</option><option value="admin">Admin</option></select>
+      <h4>👥 Registered Users</h4>
+      <div id="user-list"></div>
+    </div>
+    <div class="acard">
+      <h4>🔑 Generate Invite Code</h4>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Generate code for new user — valid 24 hours</p>
+      <div class="fg1" style="margin-bottom:10px">
+        <label>Role</label>
+        <select id="inv-role"><option value="user">User (add/edit)</option><option value="viewer">Viewer (read only)</option><option value="admin">Admin</option></select>
       </div>
-      <button class="btn ba" onclick="generateInvite()" style="width:100%">Code Generate Karein</button>
-      <div id="inv-result" style="display:none;margin-top:14px;padding:12px;background:#080e1e;border-radius:8px;font-family:monospace;font-size:16px;letter-spacing:2px;text-align:center;color:var(--acc)"></div>
+      <button class="btn ba" onclick="generateInvite()" style="width:100%">Generate Code</button>
+      <div id="inv-result" style="display:none;margin-top:12px;padding:10px;background:#080e1e;border-radius:7px;font-family:monospace;font-size:15px;letter-spacing:2px;text-align:center;color:var(--acc)"></div>
+      <div class="acard" style="margin-top:14px;padding:14px">
+        <h4>➕ Add New Site</h4>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="new-site-name" placeholder="e.g. Site F" style="flex:1;background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 9px;color:var(--text);font-size:12px;outline:none"/>
+          <button class="btn ba" onclick="addNewSite()">Add</button>
+        </div>
+        <div class="msg" id="site-msg"></div>
+        <div style="margin-top:10px" id="sites-list"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -491,188 +618,190 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 </div>
 
 <!-- SITE INVENTORY MODAL -->
-<div id="t-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto">
-    <h3 id="t-modal-title" style="font-size:16px;font-weight:800;margin-bottom:18px">Item Add Karein</h3>
+<div class="modal-ov" id="t-modal">
+  <div class="modal-box">
+    <h3 id="t-modal-title">Add Site Item</h3>
     <div class="fg">
       <div class="fl" style="grid-column:1/-1"><label>Item Name *</label><input id="m-name" placeholder="e.g. Cement 50kg"/></div>
       <div class="fl"><label>Category</label><select id="m-cat"><option>Cement & Concrete</option><option>Steel & Iron</option><option>Bricks & Blocks</option><option>Sand & Aggregate</option><option>Tiles & Flooring</option><option>Electrical</option><option>Plumbing</option><option>Paint & Chemical</option><option>Tools & Equipment</option><option>Other</option></select></div>
-      <div class="fl"><label>Site</label><select id="m-site"><option>Site A</option><option>Site B</option><option>Site C</option><option>Site D</option><option>Site E</option></select></div>
+      <div class="fl"><label>Site</label><select id="m-site"></select></div>
       <div class="fl"><label>Quantity</label><input type="number" id="m-qty" placeholder="0" min="0"/></div>
       <div class="fl"><label>Unit</label><select id="m-unit"><option>Bags</option><option>Kg</option><option>Tons</option><option>Pieces</option><option>Meters</option><option>Liters</option><option>Cubic Feet</option><option>Sets</option></select></div>
       <div class="fl"><label>Min Stock Alert</label><input type="number" id="m-min" placeholder="e.g. 10" min="0"/></div>
+      <div class="fl"><label>Equipment / Property No.</label><input id="m-eqno" placeholder="e.g. EQ-2024-001"/></div>
       <div class="fl" style="grid-column:1/-1"><label>Notes</label><input id="m-notes" placeholder="Optional"/></div>
     </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+    <div class="modal-actions">
       <button class="btn bd" onclick="closeTModal()">Cancel</button>
-      <button class="btn ba" onclick="saveTItem()">Save Karein</button>
+      <button class="btn ba" onclick="saveTItem()">Save</button>
     </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════
 const SUPA_URL='https://uxhtffhfudynqbazfzjg.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4aHRmZmhmdWR5bnFiYXpmempnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5OTEyMjksImV4cCI6MjA5NzU2NzIyOX0.Cz7yXki5C6i8UyHgt6pH0wjp6t-IJ_MbPkAr6tnp6mg';
 
 const db=async(path,method='GET',body=null,tok=null)=>{
   const h={'Content-Type':'application/json','apikey':SUPA_KEY,'Prefer':'return=representation'};
   if(tok)h['Authorization']='Bearer '+tok;
-  const o={method,headers:h};
-  if(body)o.body=JSON.stringify(body);
+  const o={method,headers:h};if(body)o.body=JSON.stringify(body);
   const r=await fetch(SUPA_URL+path,o);
   let d=null;try{d=await r.json();}catch(e){}
   return{ok:r.ok,status:r.status,data:d};
 };
-
 const authReq=async(path,body)=>{
   const r=await fetch(SUPA_URL+'/auth/v1'+path,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify(body)});
   return{ok:r.ok,data:await r.json()};
 };
 
-// ═══════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════
-let S={session:null,profile:null,prods:[],issues:[],acData:{},tItems:[],tUsers:[],tEditId:null,curSite:'Site A',charts:{}};
+let S={session:null,profile:null,prods:[],issues:[],receipts:[],acData:{},tItems:[],mdrRecords:[],tUsers:[],tEditId:null,curSite:'',charts:{},sites:[]};
+const SITE_COLORS_DEF=['#f59e0b','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#f97316','#8b5cf6','#10b981','#ec4899'];
 
-const SITE_COLORS={'Site A':'#f59e0b','Site B':'#3b82f6','Site C':'#22c55e','Site D':'#a855f7','Site E':'#ef4444'};
-const CHART_COLORS=['#f59e0b','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4'];
-
-// ═══════════════════════════════════════════
 // AUTH
-// ═══════════════════════════════════════════
-function switchTab(t,el){
-  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('login-form').style.display=t==='login'?'flex':'none';
-  document.getElementById('register-form').style.display=t==='register'?'flex':'none';
-}
+function switchTab(t,el){document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('login-form').style.display=t==='login'?'flex':'none';document.getElementById('register-form').style.display=t==='register'?'flex':'none';}
 
 async function doLogin(){
-  const e=document.getElementById('le').value.trim();
-  const p=document.getElementById('lp').value;
-  const m=document.getElementById('lmsg');
-  m.textContent='Logging in...';m.className='amsg';
+  const e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value;
+  const m=document.getElementById('lmsg');m.textContent='Logging in...';m.className='amsg';
   const r=await authReq('/token?grant_type=password',{email:e,password:p});
   if(!r.ok){m.textContent=r.data.error_description||'Login failed';m.className='amsg err';return;}
-  S.session=r.data;
-  localStorage.setItem('aj_sess',JSON.stringify(r.data));
-  await loadProfile();
-  initApp();
+  S.session=r.data;localStorage.setItem('aj_sess',JSON.stringify(r.data));
+  await loadProfile();initApp();
 }
 
 async function doRegister(){
-  const inv=document.getElementById('ri').value.trim();
-  const name=document.getElementById('rn').value.trim();
-  const email=document.getElementById('re').value.trim();
-  const pass=document.getElementById('rp').value;
+  const inv=document.getElementById('ri').value.trim(),name=document.getElementById('rn').value.trim(),email=document.getElementById('re').value.trim(),pass=document.getElementById('rp').value;
   const m=document.getElementById('rmsg');
-  if(!inv||!name||!email||!pass){m.textContent='Sab fields bharein';m.className='amsg err';return;}
+  if(!inv||!name||!email||!pass){m.textContent='Please fill all fields';m.className='amsg err';return;}
   if(pass.length<6){m.textContent='Password min 6 characters';m.className='amsg err';return;}
   const ic=await db(`/rest/v1/invite_codes?code=eq.${inv}&used=eq.false&select=*`);
-  if(!ic.ok||!ic.data||!ic.data.length){m.textContent='Galat ya expired invite code';m.className='amsg err';return;}
-  const invData=ic.data[0];
-  m.textContent='Account bana raha hai...';m.className='amsg';
+  if(!ic.ok||!ic.data?.length){m.textContent='Invalid or expired invite code';m.className='amsg err';return;}
+  const invData=ic.data[0];m.textContent='Creating account...';m.className='amsg';
   const r=await authReq('/signup',{email,password:pass});
   if(!r.ok){m.textContent=r.data.error_description||'Signup failed';m.className='amsg err';return;}
   const uid=r.data.user?.id||r.data.id;
   await db('/rest/v1/profiles','POST',{id:uid,name,email,role:invData.role||'user'});
   await db(`/rest/v1/invite_codes?id=eq.${invData.id}`,'PATCH',{used:true,used_by:email});
-  m.textContent='✅ Account ban gaya! Ab login karein.';m.className='amsg ok';
+  m.textContent='✅ Account created! Please login.';m.className='amsg ok';
 }
 
 async function loadProfile(){
-  const uid=S.session.user?.id;
-  const email=S.session.user?.email;
+  const uid=S.session.user?.id,email=S.session.user?.email;
   let r=await db(`/rest/v1/profiles?id=eq.${uid}&select=*`,'GET',null,S.session.access_token);
-  if(r.ok&&r.data&&r.data.length){S.profile=r.data[0];return;}
+  if(r.ok&&r.data?.length){S.profile=r.data[0];return;}
   r=await db(`/rest/v1/profiles?email=eq.${email}&select=*`,'GET',null,S.session.access_token);
-  if(r.ok&&r.data&&r.data.length){S.profile=r.data[0];return;}
+  if(r.ok&&r.data?.length){S.profile=r.data[0];return;}
   S.profile={name:email,role:'user',email};
 }
 
-async function doLogout(){
-  await authReq('/logout',{});
-  localStorage.removeItem('aj_sess');
-  S.session=null;S.profile=null;
-  document.getElementById('app').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
-}
+async function doLogout(){await authReq('/logout',{});localStorage.removeItem('aj_sess');S.session=null;S.profile=null;document.getElementById('app').style.display='none';document.getElementById('auth-screen').style.display='flex';}
 
 window.addEventListener('load',async()=>{
   const saved=localStorage.getItem('aj_sess');
-  if(saved){
-    try{
-      const s=JSON.parse(saved);
-      const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({refresh_token:s.refresh_token})});
-      if(r.ok){S.session=await r.json();localStorage.setItem('aj_sess',JSON.stringify(S.session));await loadProfile();initApp();return;}
-    }catch(e){}
-    localStorage.removeItem('aj_sess');
-  }
+  if(saved){try{const s=JSON.parse(saved);const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({refresh_token:s.refresh_token})});if(r.ok){S.session=await r.json();localStorage.setItem('aj_sess',JSON.stringify(S.session));await loadProfile();initApp();return;}}catch(e){}localStorage.removeItem('aj_sess');}
 });
 
-// ═══════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════
 async function initApp(){
   document.getElementById('auth-screen').style.display='none';
-  document.getElementById('app').style.display='block';
+  document.getElementById('app').style.display='flex';
   document.getElementById('cur-user').textContent=S.profile?.name||'User';
   const isAdmin=S.profile?.role==='admin';
   document.getElementById('admin-sec').style.display=isAdmin?'block':'none';
   document.getElementById('admin-btn').style.display=isAdmin?'flex':'none';
-  await loadAll();
-  await loadTItems();
+  await loadSites();
+  await loadAll();await loadTItems();await loadMDR();
   if(isAdmin)await loadUsers();
-  renderSDash();renderTDash();renderTInv();renderNotifs();
   document.getElementById('chart-month').value=new Date().getMonth();
   document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mdr-date').value=new Date().toISOString().split('T')[0];
+  addIRow();addMDRRow();
 }
 
-// ═══════════════════════════════════════════
-// STORE DATA
-// ═══════════════════════════════════════════
+// SITES MANAGEMENT
+async function loadSites(){
+  const r=await db('/rest/v1/sites?select=*&order=name','GET',null,S.session?.access_token);
+  if(r.ok&&r.data&&r.data.length){S.sites=r.data.map(s=>s.name);}
+  else{S.sites=['Site A','Site B','Site C','Site D','Site E'];}
+  populateSiteDropdowns();renderSiteTabs();
+}
+
+function populateSiteDropdowns(){
+  const opts='<option value="">-- Store Only --</option>'+S.sites.map(s=>`<option value="${s}">${s}</option>`).join('');
+  const isite=document.getElementById('i-site');if(isite)isite.innerHTML=opts;
+  const mdrFrom=document.getElementById('mdr-from');if(mdrFrom)mdrFrom.innerHTML='<option value="">-- Select Site --</option>'+S.sites.map(s=>`<option value="${s}">${s}</option>`).join('');
+  const mSite=document.getElementById('m-site');if(mSite)mSite.innerHTML=S.sites.map(s=>`<option value="${s}">${s}</option>`).join('');
+  const tSiteF=document.getElementById('t-site-f');if(tSiteF)tSiteF.innerHTML='<option value="">All Sites</option>'+S.sites.map(s=>`<option value="${s}">${s}</option>`).join('');
+  if(S.sites.length&&!S.curSite)S.curSite=S.sites[0];
+  renderSitesList();
+}
+
+function renderSiteTabs(){
+  const cont=document.getElementById('site-tabs-container');if(!cont)return;
+  cont.innerHTML=S.sites.map((s,i)=>`<button class="stab${i===0?' active':''}" onclick="showSite('${s}',this)">${s}</button>`).join('');
+  if(S.sites.length)showSite(S.curSite||S.sites[0],cont.querySelector('.stab'));
+}
+
+function renderSitesList(){
+  const el=document.getElementById('sites-list');if(!el)return;
+  el.innerHTML=S.sites.map(s=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:12px"><span>🏢 ${s}</span></div>`).join('');
+}
+
+async function addNewSite(){
+  const name=document.getElementById('new-site-name').value.trim();
+  if(!name){setMsg('site-msg','Enter site name','#fca5a5');return;}
+  if(S.sites.includes(name)){setMsg('site-msg','Site already exists','#fde68a');return;}
+  const tok=S.session?.access_token;
+  await db('/rest/v1/sites','POST',{name,created_at:new Date().toISOString()},tok);
+  document.getElementById('new-site-name').value='';
+  setMsg('site-msg','✓ Site added!','#4ade80');
+  await loadSites();
+}
+
+// DATA LOAD
 async function loadAll(){
   const tok=S.session?.access_token;
-  const [pr,iss,isi,ac]=await Promise.all([
+  const [pr,iss,rv,ac]=await Promise.all([
     db('/rest/v1/products?select=*&order=created_at.desc','GET',null,tok),
-    db('/rest/v1/issues?select=*&order=issue_date.desc','GET',null,tok),
-    db('/rest/v1/issue_items?select=*,issues(*),products(*)','GET',null,tok),
+    db('/rest/v1/issue_items?select=*,issues(*),products(*)&order=created_at.desc','GET',null,tok),
+    db('/rest/v1/receipts?select=*,products(*)&order=created_at.desc','GET',null,tok),
     db('/rest/v1/autocomplete_data?select=*','GET',null,tok)
   ]);
   if(pr.ok&&pr.data)S.prods=pr.data;
-  if(isi.ok&&isi.data)S.issues=isi.data;
+  if(iss.ok&&iss.data)S.issues=iss.data;
+  if(rv.ok&&rv.data)S.receipts=rv.data;
   if(ac.ok&&ac.data){S.acData={};ac.data.forEach(r=>{if(!S.acData[r.field])S.acData[r.field]=[];if(!S.acData[r.field].includes(r.value))S.acData[r.field].push(r.value);});}
-  renderSDash();renderProdTable();renderIssueTable();renderStock('all');renderRptTable();fillSelects();
+  renderSDash();renderProdTable();renderIssueTable();renderStock('all');renderRptTable();renderRecvTable();renderBalanceSheet();fillSelects();
 }
 
-async function saveAC(field,value){
-  if(!value)return;
-  const tok=S.session?.access_token;
-  const ex=await db(`/rest/v1/autocomplete_data?field=eq.${field}&value=eq.${encodeURIComponent(value)}&select=id`,'GET',null,tok);
-  if(ex.ok&&ex.data&&!ex.data.length)await db('/rest/v1/autocomplete_data','POST',{field,value},tok);
+async function loadTItems(){
+  const r=await db('/rest/v1/inventory?select=*&order=created_at.desc','GET',null,S.session?.access_token);
+  if(r.ok&&r.data)S.tItems=r.data;
+  renderTDash();renderTInv();renderNotifs();if(S.curSite)showSite(S.curSite,null);
 }
 
-// ═══════════════════════════════════════════
+async function loadMDR(){
+  const r=await db('/rest/v1/mdr_items?select=*,mdr_records(*),inventory(*)&order=created_at.desc','GET',null,S.session?.access_token);
+  if(r.ok&&r.data)S.mdrRecords=r.data;
+  renderMDRTable();
+}
+
+async function saveAC(field,value){if(!value)return;const tok=S.session?.access_token;const ex=await db(`/rest/v1/autocomplete_data?field=eq.${field}&value=eq.${encodeURIComponent(value)}&select=id`,'GET',null,tok);if(ex.ok&&ex.data&&!ex.data.length)await db('/rest/v1/autocomplete_data','POST',{field,value},tok);}
+
 // AUTOCOMPLETE
-// ═══════════════════════════════════════════
 function acShow(inp,field,listId){
-  const v=inp.value.toLowerCase();
-  const list=document.getElementById(listId);
-  if(!list)return;
+  const v=inp.value.toLowerCase();const list=document.getElementById(listId);if(!list)return;
   const vals=(S.acData[field]||[]).filter(x=>x&&x.toLowerCase().includes(v));
-  if(!vals.length||!v){list.classList.remove('show');return;}
+  if(!vals.length){list.classList.remove('show');return;}
   list.innerHTML=vals.slice(0,8).map(x=>`<div class="ac-item" onmousedown="pickAC('${inp.id}','${listId}','${x.replace(/'/g,"&#39;")}')">${x}</div>`).join('');
   list.classList.add('show');
 }
 function acHide(id){setTimeout(()=>{const l=document.getElementById(id);if(l)l.classList.remove('show');},200);}
 function pickAC(inpId,listId,val){document.getElementById(inpId).value=val;acHide(listId);}
 
-// ═══════════════════════════════════════════
-// STORE RENDER
-// ═══════════════════════════════════════════
+// BADGE
 function badge(p){
   if(p.status==='damage'||p.status==='reject')return`<span class="bk bk-dm">${p.status.toUpperCase()}</span>`;
   if(p.quantity<=0)return'<span class="bk bk-no">NO STOCK</span>';
@@ -680,214 +809,221 @@ function badge(p){
   return'<span class="bk bk-ok">OK</span>';
 }
 
+// STORE DASHBOARD
 function renderSDash(){
-  const total=S.prods.length;
-  const low=S.prods.filter(p=>p.quantity>0&&p.quantity<=10).length;
-  const noStock=S.prods.filter(p=>p.quantity<=0).length;
-  const totalVal=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
+  const total=S.prods.length,low=S.prods.filter(p=>p.quantity>0&&p.quantity<=10).length,noStock=S.prods.filter(p=>p.quantity<=0).length,totalVal=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
   document.getElementById('s-stat-grid').innerHTML=`
     <div class="sc"><div class="sico">📦</div><div class="sv">${total}</div><div class="sl">Total Products</div></div>
     <div class="sc yel"><div class="sico">⚠️</div><div class="sv" style="color:#fde68a">${low}</div><div class="sl">Low Stock</div></div>
     <div class="sc red"><div class="sico">🚫</div><div class="sv" style="color:#fca5a5">${noStock}</div><div class="sl">No Stock</div></div>
-    <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:20px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Total Value</div></div>`;
-  const alerts=[];
-  if(noStock>0)alerts.push(`<div class="al r">🚨 ${noStock} item(s) ka stock khatam!</div>`);
-  if(low>0)alerts.push(`<div class="al y">⚠️ ${low} item(s) low stock mein hain</div>`);
-  if(!alerts.length)alerts.push(`<div class="al g">✅ Sab items ka stock theek hai</div>`);
-  document.getElementById('s-alert-box').innerHTML=alerts.join('');
-  const tb=document.getElementById('s-dash-tb');
-  if(!S.prods.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">Koi product nahi</td></tr>';return;}
-  tb.innerHTML=S.prods.slice(0,10).map((p,i)=>`<tr>
-    <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td><td>${p.invoice_no||'—'}</td>
-    <td>${p.description}</td><td>${p.unit}</td><td>${p.quantity}</td>
-    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>${p.supplier_name||'—'}</td><td>${badge(p)}</td>
-  </tr>`).join('');
+    <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:16px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Total Value</div></div>`;
+  
+  // Balance mini
+  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
+  document.getElementById('s-balance-mini').innerHTML=`
+    <div class="bal-card in"><div class="bl">Total Received (IN)</div><div class="bv2" style="color:#4ade80">${totalIn}</div><div class="bl">Units</div></div>
+    <div class="bal-card out"><div class="bl">Total Issued (OUT)</div><div class="bv2" style="color:#fca5a5">${totalOut}</div><div class="bl">Units</div></div>
+    <div class="bal-card bal"><div class="bl">Balance Stock</div><div class="bv2" style="color:#fde68a">${totalIn-totalOut}</div><div class="bl">Units</div></div>`;
+  
+  const alerts=S.prods.filter(p=>p.quantity<=10);
+  document.getElementById('s-alert-box').innerHTML=alerts.length?alerts.slice(0,6).map(p=>`<div class="al ${p.quantity<=0?'r':'y'}">${p.quantity<=0?'🚨':'⚠️'} <b>${p.item_code}</b> — ${p.description} | Qty: ${p.quantity}</div>`).join(''):'<div class="al g">✅ All items have sufficient stock</div>';
+  
+  const recent=[...S.receipts.slice(0,3).map(r=>({type:'IN',text:`Received: ${r.products?.item_code||'?'} +${r.quantity_received}`,date:r.receipt_date})),...S.issues.slice(0,3).map(i=>({type:'OUT',text:`Issued: ${i.products?.item_code||'?'} -${i.quantity}`,date:i.issues?.issue_date}))].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+  document.getElementById('s-recent').innerHTML=recent.map(r=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr)"><span style="color:${r.type==='IN'?'#4ade80':'#fca5a5'};font-weight:700;font-size:10px">${r.type}</span><span style="font-size:11px">${r.text}</span></div>`).join('')||'<div style="color:var(--muted);font-size:11px;padding:10px">No recent activity</div>';
 }
 
+// PRODUCT TABLE
 function renderProdTable(){
   const canEdit=['admin','user'].includes(S.profile?.role);
-  const tb=document.getElementById('prod-tb');
-  if(!S.prods.length){tb.innerHTML='<tr><td colspan="15" style="text-align:center;color:#334155;padding:20px">Koi product nahi</td></tr>';return;}
-  tb.innerHTML=S.prods.map((p,i)=>`<tr>
-    <td style="color:#475569">${i+1}</td><td><b>${p.item_code}</b></td><td>${p.invoice_no||'—'}</td>
-    <td>${p.description}</td><td>${p.unit}</td>
-    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td>
-    <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
+  document.getElementById('prod-tb').innerHTML=S.prods.length?S.prods.map((p,i)=>`<tr>
+    <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.equipment_no||'—'}</td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
+    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
     <td>${p.location||'—'}</td><td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td>
-    <td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td><td>${badge(p)}</td>
-    <td>${p.remark||'—'}</td>
+    <td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td><td>${badge(p)}</td><td>${p.remark||'—'}</td>
     <td>${canEdit?`<button class="btn bp bsm" onclick="editP('${p.id}')">✏️</button> <button class="btn bd bsm" onclick="delP('${p.id}')">🗑️</button>`:'—'}</td>
-  </tr>`).join('');
-}
-
-function renderIssueTable(){
-  const tb=document.getElementById('iss-tb');
-  if(!S.issues.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:#334155;padding:20px">Koi issue nahi</td></tr>';return;}
-  tb.innerHTML=S.issues.map((i,n)=>`<tr>
-    <td>${n+1}</td><td>${i.issues?.issue_date||i.issue_date||'—'}</td>
-    <td>${i.issues?.issued_to||i.issued_to||'—'}</td><td>${i.issues?.person_id||i.person_id||'—'}</td>
-    <td>${i.issues?.receiver_contact||i.receiver_contact||'—'}</td>
-    <td><b>${i.products?.item_code||'—'}</b></td><td>${i.products?.description||'—'}</td>
-    <td>${i.quantity||'—'}</td><td>${i.products?.unit||'—'}</td>
-    <td>${i.issues?.issued_by||i.issued_by||'—'}</td><td>${i.issues?.issued_by_title||i.issued_by_title||'—'}</td>
-    <td>${i.issues?.remark||i.remark||'—'}</td>
-  </tr>`).join('');
-}
-
-function renderStock(filter){
-  const titles={all:'All Stock',ok:'In Stock',low:'Low Stock',out:'No Stock',dmg:'Damage / Reject'};
-  document.getElementById('stock-title').textContent='◆ '+titles[filter];
-  let d=S.prods;
-  if(filter==='ok')d=d.filter(p=>p.quantity>10&&p.status==='ok');
-  else if(filter==='low')d=d.filter(p=>p.quantity>0&&p.quantity<=10);
-  else if(filter==='out')d=d.filter(p=>p.quantity<=0);
-  else if(filter==='dmg')d=d.filter(p=>p.status==='damage'||p.status==='reject');
-  const tb=document.getElementById('stk-tb');
-  if(!d.length){tb.innerHTML='<tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">No items</td></tr>';return;}
-  tb.innerHTML=d.map((p,i)=>`<tr>
-    <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
-    <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
-    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>SAR ${((+p.price_per_unit)*(+p.quantity)).toFixed(2)}</td>
-    <td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td>
-    <td>${p.receiver_id||'—'}</td><td>${p.location||'—'}</td><td>${badge(p)}</td>
-  </tr>`).join('');
-}
-
-function renderRptTable(){
-  const tb=document.getElementById('rpt-tb');
-  if(!S.issues.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">No data</td></tr>';return;}
-  tb.innerHTML=S.issues.map((i,n)=>`<tr>
-    <td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.issues?.issued_to||'—'}</td>
-    <td>${i.issues?.person_id||'—'}</td><td><b>${i.products?.item_code||'—'}</b></td>
-    <td>${i.products?.description||'—'}</td><td>${i.quantity}</td><td>${i.products?.unit||'—'}</td>
-    <td>${i.issues?.issued_by||'—'}</td><td>${i.issues?.issued_by_title||'—'}</td>
-  </tr>`).join('');
+  </tr>`).join(''):'<tr><td colspan="16" style="text-align:center;color:#334155;padding:20px">No products found</td></tr>';
+  fillSelects();
 }
 
 function fillSelects(){
   const opts='<option value="">-- Select Product --</option>'+S.prods.map(p=>`<option value="${p.id}">[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</option>`).join('');
   document.querySelectorAll('.isel').forEach(s=>{const v=s.value;s.innerHTML=opts;if(v)s.value=v;});
   const rp=document.getElementById('rpt-pid');if(rp)rp.innerHTML=opts;
+  const rv=document.getElementById('rv-prod');if(rv)rv.innerHTML=opts;
 }
 
-// ═══════════════════════════════════════════
-// STORE ACTIONS
-// ═══════════════════════════════════════════
 async function saveProduct(){
-  const code=document.getElementById('f-code').value.trim();
-  const desc=document.getElementById('f-desc').value.trim();
-  const unit=document.getElementById('f-unit').value;
-  if(!code||!desc||!unit){setMsg('pmsg','⚠ Item Code, Description aur Unit zaroor bharein!','#fca5a5');return;}
+  const code=document.getElementById('f-code').value.trim(),desc=document.getElementById('f-desc').value.trim(),unit=document.getElementById('f-unit').value;
+  if(!code||!desc||!unit){setMsg('pmsg','Item Code, Description and Unit are required!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,supplier_contact:document.getElementById('f-supcon').value.trim()||null,last_purchase:document.getElementById('f-date').value||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
+  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,equipment_no:document.getElementById('f-eqno').value.trim()||null,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,supplier_contact:document.getElementById('f-supcon').value.trim()||null,last_purchase:document.getElementById('f-date').value||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
   const eid=document.getElementById('edit-id').value;
   let res;
   if(eid)res=await db(`/rest/v1/products?id=eq.${eid}`,'PATCH',obj,tok);
   else{const ex=S.prods.find(p=>p.item_code===code);if(ex)res=await db(`/rest/v1/products?id=eq.${ex.id}`,'PATCH',obj,tok);else res=await db('/rest/v1/products','POST',obj,tok);}
-  if(!res.ok){setMsg('pmsg','Error saving product','#fca5a5');return;}
-  await Promise.all([saveAC('item_code',code),saveAC('invoice_no',obj.invoice_no),saveAC('description',desc),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('supplier_contact',obj.supplier_contact),saveAC('receiver_id',obj.receiver_id)]);
+  if(!res.ok){setMsg('pmsg','Error saving','#fca5a5');return;}
+  await Promise.all([saveAC('item_code',code),saveAC('invoice_no',obj.invoice_no),saveAC('description',desc),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('supplier_contact',obj.supplier_contact),saveAC('receiver_id',obj.receiver_id),saveAC('equipment_no',obj.equipment_no)]);
   setMsg('pmsg','✓ Product saved!','#4ade80');clearProd();await loadAll();
 }
 
-function clearProd(){['f-code','f-invoice','f-desc','f-price','f-qty','f-loc','f-sup','f-supcon','f-date','f-receiver','f-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('edit-id').value='';}
+function clearProd(){['f-code','f-invoice','f-desc','f-price','f-qty','f-eqno','f-loc','f-sup','f-supcon','f-date','f-receiver','f-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('edit-id').value='';}
 
-function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-loc').value=p.location||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-supcon').value=p.supplier_contact||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('s-prod');window.scrollTo(0,0);}
+function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-supcon').value=p.supplier_contact||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('s-prod',null);window.scrollTo(0,0);}
 
 async function delP(id){if(!confirm('Delete this product?'))return;await db(`/rest/v1/products?id=eq.${id}`,'DELETE',null,S.session?.access_token);await loadAll();}
 
-function addIRow(){const opts='<option value="">-- Select Product --</option>'+S.prods.map(p=>`<option value="${p.id}">[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</option>`).join('');const d=document.createElement('div');d.className='ir';d.innerHTML=`<select class="isel">${opts}</select><input type="number" class="iqty" placeholder="Qty" min="1"/><button class="btn bd bsm" onclick="this.parentElement.remove()">✕</button>`;document.getElementById('ilist').appendChild(d);}
+// ISSUE
+function addIRow(){const opts='<option value="">-- Select Product --</option>'+S.prods.map(p=>`<option value="${p.id}">[${p.item_code}] ${p.description} | Qty:${p.quantity}</option>`).join('');const d=document.createElement('div');d.className='ir';d.innerHTML=`<select class="isel">${opts}</select><input type="number" class="iqty" placeholder="Qty" min="1" style="width:75px"/><button class="btn bd bsm" onclick="this.parentElement.remove()">✕</button>`;document.getElementById('ilist').appendChild(d);}
+
+function renderIssueTable(){
+  document.getElementById('iss-tb').innerHTML=S.issues.length?S.issues.map((i,n)=>`<tr>
+    <td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.person_id||'—'}</td>
+    <td>${i.issues?.receiver_contact||'—'}</td><td>${i.issues?.issue_site||'—'}</td>
+    <td><b>${i.products?.item_code||'—'}</b></td><td>${i.products?.description||'—'}</td>
+    <td>${i.quantity}</td><td>${i.products?.unit||'—'}</td>
+    <td>${i.issues?.issued_by||'—'}</td><td>${i.issues?.issued_by_title||'—'}</td><td>${i.issues?.remark||'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">No issues found</td></tr>';
+}
 
 async function saveIssue(){
-  const to=document.getElementById('i-to').value.trim();
-  const by=document.getElementById('i-by').value.trim();
-  const title=document.getElementById('i-title').value;
-  if(!to||!by){setMsg('imsg','⚠ Issued To aur Issued By zaroor bharein!','#fca5a5');return;}
-  if(!title){setMsg('imsg','⚠ Issuer Title select karein!','#fca5a5');return;}
-  const pid=document.getElementById('i-pid').value.trim();
-  const rcon=document.getElementById('i-rcon').value.trim();
-  const dt=document.getElementById('i-date').value||new Date().toISOString().split('T')[0];
-  const rem=document.getElementById('i-rem').value.trim();
-  const rows=[...document.querySelectorAll('.ir')];
-  const items=[];
-  for(const r of rows){const pid2=r.querySelector('.isel').value;const qty=parseFloat(r.querySelector('.iqty').value);if(!pid2||!qty||qty<=0)continue;const p=S.prods.find(x=>x.id===pid2);if(!p)continue;if(qty>p.quantity){setMsg('imsg','⚠ Not enough stock for '+p.item_code+'! Available: '+p.quantity,'#fca5a5');return;}items.push({pid:pid2,qty,prod:p});}
-  if(!items.length){setMsg('imsg','⚠ Kam az kam ek item add karein!','#fca5a5');return;}
+  const to=document.getElementById('i-to').value.trim(),by=document.getElementById('i-by').value.trim(),title=document.getElementById('i-title').value,issueSite=document.getElementById('i-site').value;
+  if(!to||!by||!title){setMsg('imsg','Issued To, Issued By and Title are required!','#fca5a5');return;}
+  const rows=[...document.querySelectorAll('#ilist .ir')];const items=[];
+  for(const r of rows){const pid=r.querySelector('.isel').value;const qty=parseFloat(r.querySelector('.iqty').value);if(!pid||!qty||qty<=0)continue;const p=S.prods.find(x=>x.id===pid);if(!p)continue;if(qty>p.quantity){setMsg('imsg','Not enough stock for '+p.item_code+'! Available: '+p.quantity,'#fca5a5');return;}items.push({pid,qty,prod:p});}
+  if(!items.length){setMsg('imsg','Add at least one item!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const r1=await db('/rest/v1/issues','POST',{issued_to:to,issued_by:by,issued_by_title:title,person_id:pid||null,receiver_contact:rcon||null,issue_date:dt,remark:rem||null},tok);
+  const r1=await db('/rest/v1/issues','POST',{issued_to:to,issued_by:by,issued_by_title:title,person_id:document.getElementById('i-pid').value.trim()||null,receiver_contact:document.getElementById('i-rcon').value.trim()||null,issue_site:issueSite||null,issue_date:document.getElementById('i-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('i-rem').value.trim()||null},tok);
   if(!r1.ok){setMsg('imsg','Error creating issue','#fca5a5');return;}
   const issueId=r1.data?.[0]?.id||r1.data?.id;
-  for(const it of items){await db('/rest/v1/issue_items','POST',{issue_id:issueId,product_id:it.pid,quantity:it.qty},tok);await db(`/rest/v1/products?id=eq.${it.pid}`,'PATCH',{quantity:it.prod.quantity-it.qty},tok);}
-  await Promise.all([saveAC('issued_to',to),saveAC('issued_by',by),saveAC('person_id',pid),saveAC('receiver_contact',rcon)]);
-  setMsg('imsg','✓ Items issued! Stock updated.','#4ade80');clearIssue();await loadAll();
+  for(const it of items){
+    await db('/rest/v1/issue_items','POST',{issue_id:issueId,product_id:it.pid,quantity:it.qty},tok);
+    const newQty=it.prod.quantity-it.qty;
+    await db(`/rest/v1/products?id=eq.${it.pid}`,'PATCH',{quantity:newQty},tok);
+    // If issued to a site, add to site inventory
+    if(issueSite){
+      const existing=S.tItems.find(x=>x.name===it.prod.description&&x.site===issueSite);
+      if(existing)await db(`/rest/v1/inventory?id=eq.${existing.id}`,'PATCH',{qty:existing.qty+it.qty,updated_at:new Date().toISOString()},tok);
+      else await db('/rest/v1/inventory','POST',{name:it.prod.description,category:'From Store',site:issueSite,qty:it.qty,unit:it.prod.unit,min_stock:0,equipment_no:it.prod.equipment_no||null,notes:'Issued from store: '+it.prod.item_code,created_at:new Date().toISOString(),updated_at:new Date().toISOString()},tok);
+    }
+  }
+  await Promise.all([saveAC('issued_to',to),saveAC('issued_by',by),saveAC('person_id',document.getElementById('i-pid').value.trim())]);
+  setMsg('imsg','✓ Items issued! Stock updated.','#4ade80');clearIssue();await loadAll();await loadTItems();
 }
 
-function clearIssue(){['i-to','i-by','i-pid','i-rcon','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
+function clearIssue(){['i-to','i-by','i-pid','i-rcon','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-site').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
 
-// ═══════════════════════════════════════════
-// PDF REPORTS
-// ═══════════════════════════════════════════
-function pdfHeader(doc,subtitle,landscape){const w=landscape?297:210;doc.setFillColor(13,27,62);doc.rect(0,0,w,38,'F');doc.setFillColor(249,115,22);doc.rect(0,34,w,4,'F');doc.setTextColor(255,255,255);doc.setFontSize(15);doc.setFont(undefined,'bold');doc.text('AJANTA CONSTRUCTION COMPANY',w/2,14,{align:'center'});doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text('Store Inventory Management System',w/2,22,{align:'center'});doc.setFontSize(8);doc.text('Strength · Trust · Innovation',w/2,30,{align:'center'});doc.setTextColor(0,0,0);doc.setFontSize(13);doc.setFont(undefined,'bold');doc.text(subtitle,14,50);doc.setFontSize(8);doc.setFont(undefined,'normal');doc.setTextColor(100,100,100);doc.text('Generated: '+new Date().toLocaleString(),14,57);doc.setTextColor(0,0,0);}
-function pdfFooter(doc,landscape){const w=landscape?297:210;const h=doc.internal.pageSize.getHeight();doc.setFontSize(7);doc.setTextColor(150,150,150);doc.text('Ajanta Construction Company — Store Inventory Report — Confidential',w/2,h-5,{align:'center'});}
-
-function makePDF(type){
-  const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');const today=new Date().toISOString().split('T')[0];const now=new Date();
-  let title='',cols=[],rows=[];
-  if(type==='daily'){title='Daily Issue Report — '+today;const d=S.issues.filter(i=>i.issues?.issue_date===today||i.issue_date===today);cols=[['#','Date','Issued To','Person ID','Rcvr Contact','Item Code','Desc','Qty','Unit','Issued By','Title','Remark']];rows=d.map((i,n)=>[n+1,i.issues?.issue_date||i.issue_date||'',i.issues?.issued_to||i.issued_to||'',i.issues?.person_id||i.person_id||'',i.issues?.receiver_contact||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);}
-  else if(type==='weekly'){title='Weekly Issue Report';const cut=new Date(now-7*864e5).toISOString().split('T')[0];const d=S.issues.filter(i=>(i.issues?.issue_date||i.issue_date||'')>=cut);cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title']];rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'']);}
-  else if(type==='monthly'){title='Monthly Issue Report';const cut=new Date(now-30*864e5).toISOString().split('T')[0];const d=S.issues.filter(i=>(i.issues?.issue_date||'')>=cut);cols=[['#','Date','Issued To','Person ID','Item Code','Description','Qty','Unit','Issued By','Title']];rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'']);}
-  else if(type==='stock'){title='Full Stock Report — '+today;cols=[['#','Code','Invoice','Description','Unit','Qty','Price','Total','Supplier','Contact','Receiver','Location','Status']];rows=S.prods.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,(+p.price_per_unit).toFixed(2),((+p.price_per_unit)*(+p.quantity)).toFixed(2),p.supplier_name||'—',p.supplier_contact||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW':p.status.toUpperCase()]);}
-  else if(type==='allissue'){title='Complete Issue Report';cols=[['#','Date','Issued To','Person ID','Rcvr Contact','Item Code','Desc','Qty','Unit','Issued By','Title','Remark']];rows=S.issues.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.issues?.receiver_contact||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);}
-  else if(type==='lowstock'){title='Low Stock Alert — '+today;const d=S.prods.filter(p=>p.quantity<=10);cols=[['#','Code','Invoice','Description','Unit','Qty','Supplier','Contact','Receiver','Location','Status']];rows=d.map((p,i)=>[i+1,p.item_code,p.invoice_no||'—',p.description,p.unit,p.quantity,p.supplier_name||'—',p.supplier_contact||'—',p.receiver_id||'—',p.location||'—',p.quantity<=0?'NO STOCK':'LOW STOCK']);}
-  pdfHeader(doc,title,true);
-  if(!rows.length){doc.setFontSize(10);doc.text('No data available.',14,70);}
-  else{doc.autoTable({head:cols,body:rows,startY:64,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[13,27,62],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:10,right:10}});const fy=doc.lastAutoTable.finalY+8;doc.setFontSize(8);doc.setTextColor(60,60,60);doc.text('Total Records: '+rows.length,14,fy);if(type==='stock'){const tv=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);doc.text('Total Value: SAR '+tv.toFixed(2),14,fy+6);}}
-  pdfFooter(doc,true);doc.save('Ajanta_'+type+'_'+today+'.pdf');setMsg('rpt-msg','✓ PDF downloaded!','#4ade80');
+// RECEIVE
+async function saveReceive(){
+  const pid=document.getElementById('rv-prod').value,qty=parseFloat(document.getElementById('rv-qty').value);
+  if(!pid||!qty||qty<=0){setMsg('rvmsg','Select product and enter quantity!','#fca5a5');return;}
+  const tok=S.session?.access_token;const p=S.prods.find(x=>x.id===pid);
+  const price=parseFloat(document.getElementById('rv-price').value)||p?.price_per_unit||0;
+  const r=await db('/rest/v1/receipts','POST',{product_id:pid,quantity_received:qty,price_per_unit:price,invoice_no:document.getElementById('rv-inv').value.trim()||null,supplier_name:document.getElementById('rv-sup').value.trim()||null,received_by:document.getElementById('rv-by').value.trim()||null,receipt_date:document.getElementById('rv-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('rv-rem').value.trim()||null,created_at:new Date().toISOString()},tok);
+  if(!r.ok){setMsg('rvmsg','Error saving receipt','#fca5a5');return;}
+  // Update product qty
+  if(p)await db(`/rest/v1/products?id=eq.${pid}`,'PATCH',{quantity:p.quantity+qty,price_per_unit:price||p.price_per_unit},tok);
+  setMsg('rvmsg','✓ Stock received! Balance updated.','#4ade80');clearRecv();await loadAll();
 }
 
-function makeProdPDF(){const pid=document.getElementById('rpt-pid').value;if(!pid){setMsg('rpt-msg','⚠ Product select karein!','#fca5a5');return;}const p=S.prods.find(x=>x.id===pid);const ilist=S.issues.filter(i=>i.product_id===pid);const{jsPDF}=window.jspdf;const doc=new jsPDF();const today=new Date().toISOString().split('T')[0];pdfHeader(doc,'Product Report: '+p.description+' ('+p.item_code+')',false);doc.setFontSize(9);doc.setTextColor(50,50,50);doc.text('Invoice: '+(p.invoice_no||'—')+'  |  Unit: '+p.unit+'  |  Stock: '+p.quantity+'  |  Price: SAR '+p.price_per_unit,14,65);doc.text('Supplier: '+(p.supplier_name||'—')+'  |  Contact: '+(p.supplier_contact||'—'),14,72);doc.text('Receiver: '+(p.receiver_id||'—')+'  |  Location: '+(p.location||'—'),14,79);pdfFooter(doc,false);doc.save('Ajanta_product_'+p.item_code+'_'+today+'.pdf');setMsg('rpt-msg','✓ PDF downloaded!','#4ade80');}
+function clearRecv(){['rv-qty','rv-inv','rv-sup','rv-price','rv-by','rv-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('rv-prod').value='';document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];}
 
-// ═══════════════════════════════════════════
-// SITES DATA
-// ═══════════════════════════════════════════
-async function loadTItems(){
-  const r=await db('/rest/v1/inventory?select=*&order=created_at.desc','GET',null,S.session?.access_token);
-  if(r.ok&&r.data)S.tItems=r.data;
-  renderTDash();renderTInv();renderNotifs();showSite(S.curSite,null);
+function renderRecvTable(){
+  document.getElementById('recv-tb').innerHTML=S.receipts.length?S.receipts.map((r,i)=>`<tr>
+    <td>${i+1}</td><td>${r.receipt_date||'—'}</td><td><b>${r.products?.item_code||'—'}</b></td><td>${r.products?.description||'—'}</td>
+    <td style="color:#4ade80;font-weight:700">+${r.quantity_received}</td><td>SAR ${(+r.price_per_unit).toFixed(2)}</td>
+    <td>SAR ${((+r.price_per_unit)*(+r.quantity_received)).toFixed(2)}</td>
+    <td>${r.invoice_no||'—'}</td><td>${r.supplier_name||'—'}</td><td>${r.received_by||'—'}</td><td>${r.remark||'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="11" style="text-align:center;color:#334155;padding:20px">No receipts found</td></tr>';
 }
 
-async function saveTItem(){
-  const name=document.getElementById('m-name').value.trim();
-  if(!name){alert('Item ka naam zaroor likhein');return;}
+// BALANCE SHEET
+function renderBalanceSheet(){
+  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
+  const valIn=S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0);
+  const valOut=S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
+  document.getElementById('bs-grid').innerHTML=`
+    <div class="bal-card in"><div class="bl">Total Received IN</div><div class="bv2" style="color:#4ade80">${totalIn} units</div><div class="bl">SAR ${valIn.toFixed(2)}</div></div>
+    <div class="bal-card out"><div class="bl">Total Issued OUT</div><div class="bv2" style="color:#fca5a5">${totalOut} units</div><div class="bl">SAR ${valOut.toFixed(2)}</div></div>
+    <div class="bal-card bal"><div class="bl">Balance Stock</div><div class="bv2" style="color:#fde68a">${totalIn-totalOut} units</div><div class="bl">SAR ${(valIn-valOut).toFixed(2)}</div></div>`;
+  document.getElementById('bs-in-tb').innerHTML=S.receipts.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${r.receipt_date||'—'}</td><td>${r.products?.item_code||'—'} - ${r.products?.description||'—'}</td><td style="color:#4ade80">+${r.quantity_received}</td><td>SAR ${((+r.price_per_unit)*(+r.quantity_received)).toFixed(2)}</td><td>${r.supplier_name||'—'}</td></tr>`).join('');
+  document.getElementById('bs-out-tb').innerHTML=S.issues.slice(0,20).map((i,n)=>`<tr><td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.products?.item_code||'—'} - ${i.products?.description||'—'}</td><td style="color:#fca5a5">-${i.quantity}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.issue_site||'—'}</td></tr>`).join('');
+}
+
+function renderRptTable(){
+  document.getElementById('rpt-tb').innerHTML=S.issues.length?S.issues.map((i,n)=>`<tr><td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.person_id||'—'}</td><td><b>${i.products?.item_code||'—'}</b></td><td>${i.products?.description||'—'}</td><td>${i.quantity}</td><td>${i.products?.unit||'—'}</td><td>${i.issues?.issued_by||'—'}</td><td>${i.issues?.issued_by_title||'—'}</td></tr>`).join(''):'<tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">No data</td></tr>';}
+
+function renderStock(filter){
+  const titles={all:'All Stock',ok:'In Stock',low:'Low Stock',out:'No Stock',dmg:'Damage/Reject'};
+  document.getElementById('stock-title').textContent='◆ '+titles[filter];
+  let d=S.prods;
+  if(filter==='ok')d=d.filter(p=>p.quantity>10&&p.status==='ok');
+  else if(filter==='low')d=d.filter(p=>p.quantity>0&&p.quantity<=10);
+  else if(filter==='out')d=d.filter(p=>p.quantity<=0);
+  else if(filter==='dmg')d=d.filter(p=>p.status==='damage'||p.status==='reject');
+  document.getElementById('stk-tb').innerHTML=d.length?d.map((p,i)=>`<tr>
+    <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.equipment_no||'—'}</td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
+    <td style="color:${p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
+    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>SAR ${((+p.price_per_unit)*(+p.quantity)).toFixed(2)}</td>
+    <td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td><td>${p.receiver_id||'—'}</td><td>${p.location||'—'}</td><td>${badge(p)}</td>
+  </tr>`).join(''):'<tr><td colspan="14" style="text-align:center;color:#334155;padding:20px">No items</td></tr>';}
+
+// MDR
+function addMDRRow(){
+  const opts='<option value="">-- Select Item --</option>'+S.tItems.map(i=>`<option value="${i.id}">[${i.site}] ${i.name} | Qty:${i.qty}</option>`).join('');
+  const d=document.createElement('div');d.className='ir';
+  d.innerHTML=`<select class="msel">${opts}</select><input type="number" class="mqty" placeholder="Qty" min="1" style="width:75px"/><button class="btn bd bsm" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById('mdr-ilist').appendChild(d);
+}
+
+async function saveMDR(){
+  const mdrNo=document.getElementById('mdr-no').value.trim(),from=document.getElementById('mdr-from').value,recv=document.getElementById('mdr-recv').value.trim(),rcon=document.getElementById('mdr-rcon').value.trim();
+  if(!mdrNo||!from||!recv){setMsg('mdrmsg','MDR No, From Site and Receiver are required!','#fca5a5');return;}
+  const rows=[...document.querySelectorAll('#mdr-ilist .ir')];const items=[];
+  for(const r of rows){const iid=r.querySelector('.msel').value;const qty=parseFloat(r.querySelector('.mqty').value);if(!iid||!qty||qty<=0)continue;const item=S.tItems.find(x=>x.id===iid);if(!item)continue;if(qty>item.qty){setMsg('mdrmsg','Not enough stock for '+item.name+'! Available: '+item.qty,'#fca5a5');return;}items.push({iid,qty,item});}
+  if(!items.length){setMsg('mdrmsg','Add at least one item!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const payload={name,category:document.getElementById('m-cat').value,site:document.getElementById('m-site').value,qty:parseInt(document.getElementById('m-qty').value)||0,unit:document.getElementById('m-unit').value,min_stock:parseInt(document.getElementById('m-min').value)||0,notes:document.getElementById('m-notes').value.trim(),updated_at:new Date().toISOString()};
-  if(S.tEditId){await db(`/rest/v1/inventory?id=eq.${S.tEditId}`,'PATCH',payload,tok);}
-  else{payload.created_at=new Date().toISOString();await db('/rest/v1/inventory','POST',payload,tok);}
-  closeTModal();await loadTItems();
+  const r1=await db('/rest/v1/mdr_records','POST',{mdr_no:mdrNo,from_site:from,to_location:document.getElementById('mdr-to').value.trim()||null,receiver_name:recv,receiver_contact:rcon,issued_by:document.getElementById('mdr-by').value.trim()||null,mdr_date:document.getElementById('mdr-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('mdr-rem').value.trim()||null,created_at:new Date().toISOString()},tok);
+  if(!r1.ok){setMsg('mdrmsg','Error saving MDR','#fca5a5');return;}
+  const mdrId=r1.data?.[0]?.id||r1.data?.id;
+  for(const it of items){
+    await db('/rest/v1/mdr_items','POST',{mdr_id:mdrId,inventory_id:it.iid,quantity:it.qty,created_at:new Date().toISOString()},tok);
+    await db(`/rest/v1/inventory?id=eq.${it.iid}`,'PATCH',{qty:it.item.qty-it.qty,updated_at:new Date().toISOString()},tok);
+  }
+  await Promise.all([saveAC('issued_to',recv),saveAC('issued_by',document.getElementById('mdr-by').value.trim())]);
+  setMsg('mdrmsg','✓ MDR saved! Stock updated.','#4ade80');clearMDR();await loadTItems();await loadMDR();
 }
 
-async function deleteTItem(id){if(!confirm('Delete karein?'))return;await db(`/rest/v1/inventory?id=eq.${id}`,'DELETE',null,S.session?.access_token);await loadTItems();}
+function clearMDR(){['mdr-no','mdr-to','mdr-recv','mdr-rcon','mdr-by','mdr-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('mdr-from').value='';document.getElementById('mdr-date').value=new Date().toISOString().split('T')[0];document.getElementById('mdr-ilist').innerHTML='';addMDRRow();}
 
-// ═══════════════════════════════════════════
-// SITES RENDER
-// ═══════════════════════════════════════════
+function renderMDRTable(){
+  document.getElementById('mdr-tb').innerHTML=S.mdrRecords.length?S.mdrRecords.map((m,n)=>`<tr>
+    <td>${n+1}</td><td><b>${m.mdr_records?.mdr_no||'—'}</b></td><td>${m.mdr_records?.mdr_date||'—'}</td>
+    <td>${m.mdr_records?.from_site||'—'}</td><td>${m.mdr_records?.to_location||'—'}</td>
+    <td>${m.inventory?.name||'—'}</td><td>${m.inventory?.equipment_no||'—'}</td>
+    <td style="color:#fca5a5;font-weight:700">-${m.quantity}</td><td>${m.inventory?.unit||'—'}</td>
+    <td>${m.mdr_records?.receiver_name||'—'}</td><td>${m.mdr_records?.receiver_contact||'—'}</td>
+    <td>${m.mdr_records?.issued_by||'—'}</td><td>${m.mdr_records?.remark||'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">No MDR records</td></tr>';}
+
+// SITES
 function renderTDash(){
-  const total=S.tItems.length;
-  const low=S.tItems.filter(i=>i.qty<=i.min_stock).length;
-  const sites=[...new Set(S.tItems.map(i=>i.site))].length;
-  const cats=[...new Set(S.tItems.map(i=>i.category))].length;
+  const total=S.tItems.length,low=S.tItems.filter(i=>i.qty<=i.min_stock).length,activeSites=[...new Set(S.tItems.map(i=>i.site))].length,cats=[...new Set(S.tItems.map(i=>i.category))].length;
   document.getElementById('t-stat-grid').innerHTML=`
     <div class="sc"><div class="sico">📦</div><div class="sv">${total}</div><div class="sl">Total Items</div></div>
     <div class="sc red"><div class="sico">⚠️</div><div class="sv" style="color:#fca5a5">${low}</div><div class="sl">Low Stock</div></div>
-    <div class="sc grn"><div class="sico">🏢</div><div class="sv" style="color:#4ade80">${sites}</div><div class="sl">Active Sites</div></div>
+    <div class="sc grn"><div class="sico">🏢</div><div class="sv" style="color:#4ade80">${activeSites}</div><div class="sl">Active Sites</div></div>
     <div class="sc"><div class="sico">🗂️</div><div class="sv">${cats}</div><div class="sl">Categories</div></div>`;
   const lowItems=S.tItems.filter(i=>i.qty<=i.min_stock);
-  document.getElementById('t-low-list').innerHTML=lowItems.length?lowItems.slice(0,8).map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdr)"><div><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${SITE_COLORS[i.site]||'#888'};margin-right:6px"></span><strong>${i.name}</strong> <span style="color:var(--muted);font-size:11px">${i.site}</span></div><span class="bk bk-lw">${i.qty}/${i.min_stock}</span></div>`).join(''):'<div style="color:#4ade80;padding:20px;text-align:center">✅ Sab items theek hain!</div>';
+  document.getElementById('t-low-list').innerHTML=lowItems.length?lowItems.slice(0,8).map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr)"><div><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${getSiteColor(i.site)};margin-right:5px"></span><b style="font-size:11px">${i.name}</b> <span style="color:var(--muted);font-size:10px">${i.site}</span></div><span class="bk bk-lw">${i.qty}/${i.min_stock}</span></div>`).join(''):'<div style="color:#4ade80;padding:16px;text-align:center;font-size:12px">✅ All items OK!</div>';
   renderSiteChart('dash-site-chart');
 }
 
+function getSiteColor(site){const idx=S.sites.indexOf(site);return SITE_COLORS_DEF[idx>=0?idx:0];}
+
 function renderTInv(){
-  const search=document.getElementById('t-search')?.value.toLowerCase()||'';
-  const site=document.getElementById('t-site-f')?.value||'';
-  const stock=document.getElementById('t-stock-f')?.value||'';
+  const search=document.getElementById('t-search')?.value.toLowerCase()||'',site=document.getElementById('t-site-f')?.value||'',stock=document.getElementById('t-stock-f')?.value||'';
   const canEdit=['admin','user'].includes(S.profile?.role);
   let items=S.tItems.filter(i=>{
     if(search&&!i.name?.toLowerCase().includes(search)&&!i.category?.toLowerCase().includes(search))return false;
@@ -897,131 +1033,156 @@ function renderTInv(){
     return true;
   });
   document.getElementById('t-inv-tb').innerHTML=items.length?items.map((i,n)=>`<tr>
-    <td>${n+1}</td><td><strong>${i.name}</strong>${i.notes?`<div style="font-size:10px;color:var(--muted)">${i.notes}</div>`:''}</td>
-    <td>${i.category||'—'}</td>
-    <td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${SITE_COLORS[i.site]||'#888'};margin-right:5px"></span>${i.site}</td>
+    <td>${n+1}</td><td><b>${i.name}</b>${i.notes?`<div style="font-size:9px;color:var(--muted)">${i.notes}</div>`:''}</td>
+    <td>${i.category||'—'}</td><td>${i.equipment_no||'—'}</td>
+    <td><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${getSiteColor(i.site)};margin-right:4px"></span>${i.site}</td>
     <td style="font-weight:700;color:${i.qty<=i.min_stock?'#fde68a':'#4ade80'}">${i.qty}</td>
     <td>${i.unit}</td><td>${i.min_stock}</td>
-    <td><span class="bk ${i.qty<=i.min_stock?'bk-lw':'bk-ok'}">${i.qty<=i.min_stock?'Low Stock':'OK'}</span></td>
+    <td><span class="bk ${i.qty<=i.min_stock?'bk-lw':'bk-ok'}">${i.qty<=i.min_stock?'Low':'OK'}</span></td>
     <td>${canEdit?`<button class="btn bp bsm" onclick="openTEdit('${i.id}')">✏️</button> <button class="btn bd bsm" onclick="deleteTItem('${i.id}')">🗑️</button>`:'—'}</td>
-  </tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">Koi item nahi mila</td></tr>';
-}
+  </tr>`).join(''):'<tr><td colspan="10" style="text-align:center;color:#334155;padding:20px">No items found</td></tr>';}
 
 function showSite(site,btn){
-  S.curSite=site;
-  document.getElementById('site-title').textContent='◆ '+site;
+  S.curSite=site;document.getElementById('site-title').textContent='◆ '+site;
   if(btn){document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}
-  const items=S.tItems.filter(i=>i.site===site);
-  const low=items.filter(i=>i.qty<=i.min_stock).length;
+  const items=S.tItems.filter(i=>i.site===site),low=items.filter(i=>i.qty<=i.min_stock).length;
   document.getElementById('site-stats').innerHTML=`
-    <div class="sc"><div class="sico">📦</div><div class="sv">${items.length}</div><div class="sl">Total Items</div></div>
+    <div class="sc"><div class="sico">📦</div><div class="sv">${items.length}</div><div class="sl">Items</div></div>
     <div class="sc red"><div class="sico">⚠️</div><div class="sv" style="color:#fca5a5">${low}</div><div class="sl">Low Stock</div></div>
-    <div class="sc grn"><div class="sico">✅</div><div class="sv" style="color:#4ade80">${items.length-low}</div><div class="sl">Stock OK</div></div>`;
+    <div class="sc grn"><div class="sico">✅</div><div class="sv" style="color:#4ade80">${items.length-low}</div><div class="sl">OK</div></div>
+    <div class="sc"><div class="sico">📤</div><div class="sv">${S.mdrRecords.filter(m=>m.mdr_records?.from_site===site).length}</div><div class="sl">MDR Issues</div></div>`;
   document.getElementById('site-tb').innerHTML=items.length?items.map((i,n)=>`<tr>
-    <td>${n+1}</td><td><strong>${i.name}</strong></td><td>${i.category||'—'}</td>
+    <td>${n+1}</td><td><b>${i.name}</b></td><td>${i.category||'—'}</td><td>${i.equipment_no||'—'}</td>
     <td style="font-weight:700;color:${i.qty<=i.min_stock?'#fde68a':'#4ade80'}">${i.qty}</td>
     <td>${i.unit}</td><td>${i.min_stock}</td>
-    <td><span class="bk ${i.qty<=i.min_stock?'bk-lw':'bk-ok'}">${i.qty<=i.min_stock?'Low Stock':'OK'}</span></td>
-  </tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:#334155;padding:20px">'+site+' mein koi item nahi</td></tr>';
-}
+    <td><span class="bk ${i.qty<=i.min_stock?'bk-lw':'bk-ok'}">${i.qty<=i.min_stock?'Low':'OK'}</span></td>
+  </tr>`).join(''):'<tr><td colspan="8" style="text-align:center;color:#334155;padding:20px">No items in '+site+'</td></tr>';}
 
 function renderNotifs(){
-  const low=S.tItems.filter(i=>i.qty<=i.min_stock);
-  const crit=S.tItems.filter(i=>i.qty===0);
+  const low=S.tItems.filter(i=>i.qty<=i.min_stock),crit=S.tItems.filter(i=>i.qty===0);
   document.getElementById('nbadge').textContent=low.length;
   document.getElementById('nbadge').style.display=low.length?'flex':'none';
-  const list=document.getElementById('t-notif-list');
-  if(!low.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:40px">✅</div><p>Koi alert nahi — sab theek hai!</p></div>';return;}
-  list.innerHTML=[...crit.map(i=>`<div class="ni crit"><div class="niico">🚨</div><div class="nib"><p>${i.name} — ${i.site}</p><span>STOCK KHATAM! Qty: ${i.qty} ${i.unit} (Min: ${i.min_stock})</span></div></div>`),
-  ...low.filter(i=>i.qty>0).map(i=>`<div class="ni warn"><div class="niico">⚠️</div><div class="nib"><p>${i.name} — ${i.site}</p><span>Low Stock: ${i.qty} ${i.unit} bache hain (Min: ${i.min_stock})</span></div></div>`)].join('');
+  document.getElementById('t-notif-list').innerHTML=low.length?[...crit.map(i=>`<div class="ni crit"><div class="niico">🚨</div><div class="nib"><p>${i.name} — ${i.site}</p><span>STOCK EMPTY! Qty: ${i.qty} (Min: ${i.min_stock})</span></div></div>`),
+  ...low.filter(i=>i.qty>0).map(i=>`<div class="ni warn"><div class="niico">⚠️</div><div class="nib"><p>${i.name} — ${i.site}</p><span>Low Stock: ${i.qty} ${i.unit} remaining (Min: ${i.min_stock})</span></div></div>`)].join(''):'<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:36px">✅</div><p style="font-size:13px">No alerts — all stock OK!</p></div>';}
+
+// MODAL
+function openTModal(){S.tEditId=null;document.getElementById('t-modal-title').textContent='Add Site Item';['m-name','m-qty','m-min','m-notes','m-eqno'].forEach(id=>document.getElementById(id).value='');document.getElementById('t-modal').classList.add('open');}
+function openTEdit(id){const i=S.tItems.find(x=>x.id==id);if(!i)return;S.tEditId=id;document.getElementById('t-modal-title').textContent='Edit Item';document.getElementById('m-name').value=i.name;document.getElementById('m-cat').value=i.category;document.getElementById('m-site').value=i.site;document.getElementById('m-qty').value=i.qty;document.getElementById('m-unit').value=i.unit;document.getElementById('m-min').value=i.min_stock;document.getElementById('m-eqno').value=i.equipment_no||'';document.getElementById('m-notes').value=i.notes||'';document.getElementById('t-modal').classList.add('open');}
+function closeTModal(){document.getElementById('t-modal').classList.remove('open');S.tEditId=null;}
+document.getElementById('t-modal').addEventListener('click',e=>{if(e.target===document.getElementById('t-modal'))closeTModal();});
+
+async function saveTItem(){
+  const name=document.getElementById('m-name').value.trim();if(!name){alert('Item name required');return;}
+  const tok=S.session?.access_token;
+  const payload={name,category:document.getElementById('m-cat').value,site:document.getElementById('m-site').value,qty:parseInt(document.getElementById('m-qty').value)||0,unit:document.getElementById('m-unit').value,min_stock:parseInt(document.getElementById('m-min').value)||0,equipment_no:document.getElementById('m-eqno').value.trim()||null,notes:document.getElementById('m-notes').value.trim(),updated_at:new Date().toISOString()};
+  if(S.tEditId)await db(`/rest/v1/inventory?id=eq.${S.tEditId}`,'PATCH',payload,tok);
+  else{payload.created_at=new Date().toISOString();await db('/rest/v1/inventory','POST',payload,tok);}
+  closeTModal();await loadTItems();
 }
 
-// ═══════════════════════════════════════════
-// CHARTS
-// ═══════════════════════════════════════════
+async function deleteTItem(id){if(!confirm('Delete this item?'))return;await db(`/rest/v1/inventory?id=eq.${id}`,'DELETE',null,S.session?.access_token);await loadTItems();}
+
+// CHARTS - BAR ONLY
 function destroyChart(id){if(S.charts[id]){S.charts[id].destroy();delete S.charts[id];}}
 
 function renderSiteChart(canvasId){
-  destroyChart(canvasId);
-  const sites=['Site A','Site B','Site C','Site D','Site E'];
-  const data=sites.map(s=>S.tItems.filter(i=>i.site===s).reduce((a,i)=>a+i.qty,0));
-  const canvas=document.getElementById(canvasId);if(!canvas)return;
-  S.charts[canvasId]=new Chart(canvas,{type:'bar',data:{labels:sites,datasets:[{label:'Total Qty',data,backgroundColor:Object.values(SITE_COLORS),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'#1e3a8a'}},y:{ticks:{color:'#64748b'},grid:{color:'#1e3a8a'}}}}});
+  destroyChart(canvasId);const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const data=S.sites.map(s=>S.tItems.filter(i=>i.site===s).reduce((a,i)=>a+i.qty,0));
+  S.charts[canvasId]=new Chart(canvas,{type:'bar',data:{labels:S.sites,datasets:[{label:'Stock',data,backgroundColor:S.sites.map((_,i)=>SITE_COLORS_DEF[i]||'#888'),borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'#1e3a8a'}},y:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'#1e3a8a'}}}}});
 }
 
 function renderCharts(){
   renderSiteChart('chart-site-bar');
-  destroyChart('chart-cat-pie');
-  const cats={};S.tItems.forEach(i=>{cats[i.category]=(cats[i.category]||0)+i.qty;});
-  const catCanvas=document.getElementById('chart-cat-pie');
-  if(catCanvas)S.charts['chart-cat-pie']=new Chart(catCanvas,{type:'doughnut',data:{labels:Object.keys(cats),datasets:[{data:Object.values(cats),backgroundColor:CHART_COLORS,borderColor:'#0a0f1e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e2e8f0',font:{size:11}}}}}});
   destroyChart('chart-monthly');
-  const lineCanvas=document.getElementById('chart-monthly');
-  if(lineCanvas){
-    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const cm=parseInt(document.getElementById('chart-month')?.value||new Date().getMonth());
-    const labels=months.slice(Math.max(0,cm-5),cm+1);
-    const sites=['Site A','Site B','Site C','Site D','Site E'];
-    const datasets=sites.map((site,si)=>{const base=S.tItems.filter(i=>i.site===site).reduce((a,i)=>a+i.qty,0);return{label:site,data:labels.map((_,li)=>Math.max(0,base-(labels.length-li-1)*Math.floor(base*0.08)+Math.floor(Math.random()*20))),borderColor:Object.values(SITE_COLORS)[si],backgroundColor:Object.values(SITE_COLORS)[si]+'20',tension:.4,fill:false,pointRadius:4};});
-    S.charts['chart-monthly']=new Chart(lineCanvas,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e2e8f0'}}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'#1e3a8a'}},y:{ticks:{color:'#64748b'},grid:{color:'#1e3a8a'}}}}});
-  }
+  const lineCanvas=document.getElementById('chart-monthly');if(!lineCanvas)return;
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const cm=parseInt(document.getElementById('chart-month')?.value||new Date().getMonth());
+  const labels=months.slice(Math.max(0,cm-5),cm+1);
+  const datasets=S.sites.slice(0,5).map((site,si)=>{const base=S.tItems.filter(i=>i.site===site).reduce((a,i)=>a+i.qty,0);return{label:site,data:labels.map((_,li)=>Math.max(0,base-(labels.length-li-1)*Math.floor(base*0.08)+Math.floor(Math.random()*15))),backgroundColor:SITE_COLORS_DEF[si]+'99',borderRadius:4};});
+  S.charts['chart-monthly']=new Chart(lineCanvas,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e2e8f0',font:{size:9}}}},scales:{x:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'#1e3a8a'},stacked:false},y:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'#1e3a8a'}}}}});
 }
 
-// ═══════════════════════════════════════════
-// MODAL
-// ═══════════════════════════════════════════
-function openTModal(){S.tEditId=null;document.getElementById('t-modal-title').textContent='Item Add Karein';['m-name','m-qty','m-min','m-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('t-modal').style.display='flex';}
-function openTEdit(id){const i=S.tItems.find(x=>x.id==id);if(!i)return;S.tEditId=id;document.getElementById('t-modal-title').textContent='Item Edit Karein';document.getElementById('m-name').value=i.name;document.getElementById('m-cat').value=i.category;document.getElementById('m-site').value=i.site;document.getElementById('m-qty').value=i.qty;document.getElementById('m-unit').value=i.unit;document.getElementById('m-min').value=i.min_stock;document.getElementById('m-notes').value=i.notes||'';document.getElementById('t-modal').style.display='flex';}
-function closeTModal(){document.getElementById('t-modal').style.display='none';S.tEditId=null;}
-document.getElementById('t-modal').addEventListener('click',e=>{if(e.target===document.getElementById('t-modal'))closeTModal();});
-
-// ═══════════════════════════════════════════
-// EXCEL EXPORT
-// ═══════════════════════════════════════════
+// EXPORT
 function exportTExcel(){
   const wb=XLSX.utils.book_new();
-  const allData=S.tItems.map(i=>({'Item Name':i.name,'Category':i.category,'Site':i.site,'Qty':i.qty,'Unit':i.unit,'Min Stock':i.min_stock,'Status':i.qty<=i.min_stock?'LOW STOCK':'OK','Notes':i.notes||''}));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allData),'All Sites');
-  ['Site A','Site B','Site C','Site D','Site E'].forEach(site=>{const d=S.tItems.filter(i=>i.site===site).map(i=>({'Item':i.name,'Category':i.category,'Qty':i.qty,'Unit':i.unit,'Status':i.qty<=i.min_stock?'LOW STOCK':'OK'}));if(d.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),site);});
-  XLSX.writeFile(wb,'Ajanta_Sites_'+new Date().toLocaleDateString('en-PK').replace(/\//g,'-')+'.xlsx');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.tItems.map(i=>({'Item':i.name,'Category':i.category,'Equipment No':i.equipment_no||'','Site':i.site,'Qty':i.qty,'Unit':i.unit,'Min Stock':i.min_stock,'Status':i.qty<=i.min_stock?'LOW STOCK':'OK'}))), 'All Sites');
+  S.sites.forEach(site=>{const d=S.tItems.filter(i=>i.site===site).map(i=>({'Item':i.name,'Category':i.category,'Eq.No':i.equipment_no||'','Qty':i.qty,'Unit':i.unit,'Status':i.qty<=i.min_stock?'LOW STOCK':'OK'}));if(d.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),site.replace(' ','_'));});
+  XLSX.writeFile(wb,'Ajanta_Sites_'+new Date().toISOString().split('T')[0]+'.xlsx');
 }
 
-function exportSiteExcel(){
-  const wb=XLSX.utils.book_new();
-  const data=S.tItems.filter(i=>i.site===S.curSite).map(i=>({'Item':i.name,'Category':i.category,'Qty':i.qty,'Unit':i.unit,'Min Stock':i.min_stock,'Status':i.qty<=i.min_stock?'LOW STOCK':'OK'}));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),S.curSite);
-  XLSX.writeFile(wb,'Ajanta_'+S.curSite.replace(' ','_')+'_'+new Date().toLocaleDateString('en-PK').replace(/\//g,'-')+'.xlsx');
+function exportTCSV(){csvDownload(S.tItems.map(i=>({'Item':i.name,'Category':i.category,'Equipment No':i.equipment_no||'','Site':i.site,'Qty':i.qty,'Unit':i.unit,'Min Stock':i.min_stock,'Status':i.qty<=i.min_stock?'LOW':'OK'})),'Ajanta_Sites_Inventory');}
+function exportSiteExcel(){const wb=XLSX.utils.book_new();const data=S.tItems.filter(i=>i.site===S.curSite).map(i=>({'Item':i.name,'Category':i.category,'Eq.No':i.equipment_no||'','Qty':i.qty,'Unit':i.unit,'Min Stock':i.min_stock,'Status':i.qty<=i.min_stock?'LOW STOCK':'OK'}));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),S.curSite);XLSX.writeFile(wb,'Ajanta_'+S.curSite.replace(' ','_')+'_'+new Date().toISOString().split('T')[0]+'.xlsx');}
+function exportSiteCSV(){csvDownload(S.tItems.filter(i=>i.site===S.curSite).map(i=>({'Item':i.name,'Eq.No':i.equipment_no||'','Qty':i.qty,'Unit':i.unit,'Status':i.qty<=i.min_stock?'LOW':'OK'})),'Ajanta_'+S.curSite.replace(' ','_'));}
+function exportStockCSV(){csvDownload(S.prods.map(p=>({'Code':p.item_code,'Eq.No':p.equipment_no||'','Invoice':p.invoice_no||'','Description':p.description,'Unit':p.unit,'Qty':p.quantity,'Price':p.price_per_unit,'Total':((+p.price_per_unit)*(+p.quantity)).toFixed(2),'Supplier':p.supplier_name||'','Status':p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW':'OK'})),'Ajanta_Stock');}
+function exportIssueCSV(){csvDownload(S.issues.map(i=>({'Date':i.issues?.issue_date||'','Issued To':i.issues?.issued_to||'','Person ID':i.issues?.person_id||'','Site':i.issues?.issue_site||'','Item Code':i.products?.item_code||'','Description':i.products?.description||'','Qty':i.quantity,'Unit':i.products?.unit||'','Issued By':i.issues?.issued_by||'','Title':i.issues?.issued_by_title||''})),'Ajanta_Issues');}
+function exportRecvCSV(){csvDownload(S.receipts.map(r=>({'Date':r.receipt_date||'','Item Code':r.products?.item_code||'','Description':r.products?.description||'','Qty Received':r.quantity_received,'Price':r.price_per_unit,'Total':((+r.price_per_unit)*(+r.quantity_received)).toFixed(2),'Invoice':r.invoice_no||'','Supplier':r.supplier_name||'','Received By':r.received_by||''})),'Ajanta_Receipts');}
+function exportBalanceCSV(){const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);csvDownload([{Type:'Total Received IN',Quantity:totalIn,Value:S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0).toFixed(2)},{Type:'Total Issued OUT',Quantity:totalOut,Value:S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0).toFixed(2)},{Type:'Balance',Quantity:totalIn-totalOut,Value:''}],'Ajanta_Balance');}
+function exportMDRCSV(){csvDownload(S.mdrRecords.map(m=>({'MDR No':m.mdr_records?.mdr_no||'','Date':m.mdr_records?.mdr_date||'','From Site':m.mdr_records?.from_site||'','To Location':m.mdr_records?.to_location||'','Item':m.inventory?.name||'','Eq.No':m.inventory?.equipment_no||'','Qty':m.quantity,'Unit':m.inventory?.unit||'','Receiver':m.mdr_records?.receiver_name||'','Contact':m.mdr_records?.receiver_contact||'','Issued By':m.mdr_records?.issued_by||''})),'Ajanta_MDR');}
+
+function csvDownload(data,filename){if(!data.length)return;const headers=Object.keys(data[0]);const csv=[headers.join(','),...data.map(r=>headers.map(h=>JSON.stringify(r[h]??'')).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename+'_'+new Date().toISOString().split('T')[0]+'.csv';a.click();URL.revokeObjectURL(url);}
+
+// PDF
+function pdfHdr(doc,title,land){const w=land?297:210;doc.setFillColor(10,15,30);doc.rect(0,0,w,32,'F');doc.setFillColor(249,115,22);doc.rect(0,28,w,3,'F');doc.setTextColor(255,255,255);doc.setFontSize(13);doc.setFont(undefined,'bold');doc.text('AJANTA CONSTRUCTION COMPANY',w/2,11,{align:'center'});doc.setFontSize(8);doc.setFont(undefined,'normal');doc.text('Inventory Management System',w/2,18,{align:'center'});doc.setTextColor(0,0,0);doc.setFontSize(12);doc.setFont(undefined,'bold');doc.text(title,12,44);doc.setFontSize(7);doc.setFont(undefined,'normal');doc.setTextColor(100,100,100);doc.text('Generated: '+new Date().toLocaleString(),12,50);doc.setTextColor(0,0,0);}
+function pdfFtr(doc,land){const w=land?297:210;const h=doc.internal.pageSize.getHeight();doc.setFontSize(6);doc.setTextColor(150,150,150);doc.text('Ajanta Construction — Confidential',w/2,h-4,{align:'center'});}
+
+function makePDF(type){
+  const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');const today=new Date().toISOString().split('T')[0];const now=new Date();
+  let title='',cols=[],rows=[];
+  if(type==='daily'){title='Daily Issue Report — '+today;const d=S.issues.filter(i=>i.issues?.issue_date===today);cols=[['#','Date','Issued To','Person ID','Contact','Site','Item Code','Description','Qty','Unit','Issued By','Title','Remark']];rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.issues?.receiver_contact||'',i.issues?.issue_site||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'',i.issues?.remark||'']);}
+  else if(type==='weekly'){title='Weekly Issue Report';const cut=new Date(now-7*864e5).toISOString().split('T')[0];const d=S.issues.filter(i=>(i.issues?.issue_date||'')>=cut);cols=[['#','Date','Issued To','Site','Item Code','Description','Qty','Unit','Issued By']];rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.issue_site||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'']);}
+  else if(type==='monthly'){title='Monthly Issue Report';const cut=new Date(now-30*864e5).toISOString().split('T')[0];const d=S.issues.filter(i=>(i.issues?.issue_date||'')>=cut);cols=[['#','Date','Issued To','Site','Item Code','Description','Qty','Unit','Issued By']];rows=d.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.issue_site||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'']);}
+  else if(type==='stock'){title='Full Stock Report — '+today;cols=[['#','Code','Eq.No','Invoice','Description','Unit','Qty','Price','Total','Supplier','Location','Status']];rows=S.prods.map((p,i)=>[i+1,p.item_code,p.equipment_no||'—',p.invoice_no||'—',p.description,p.unit,p.quantity,(+p.price_per_unit).toFixed(2),((+p.price_per_unit)*(+p.quantity)).toFixed(2),p.supplier_name||'—',p.location||'—',p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW':'OK']);}
+  else if(type==='allissue'){title='Complete Issue Report';cols=[['#','Date','Issued To','Person ID','Contact','Site','Item Code','Description','Qty','Unit','Issued By','Title']];rows=S.issues.map((i,n)=>[n+1,i.issues?.issue_date||'',i.issues?.issued_to||'',i.issues?.person_id||'',i.issues?.receiver_contact||'',i.issues?.issue_site||'',i.products?.item_code||'',i.products?.description||'',i.quantity,i.products?.unit||'',i.issues?.issued_by||'',i.issues?.issued_by_title||'']);}
+  else if(type==='lowstock'){title='Low Stock Alert — '+today;const d=S.prods.filter(p=>p.quantity<=10);cols=[['#','Code','Eq.No','Description','Unit','Qty','Supplier','Contact','Status']];rows=d.map((p,i)=>[i+1,p.item_code,p.equipment_no||'—',p.description,p.unit,p.quantity,p.supplier_name||'—',p.supplier_contact||'—',p.quantity<=0?'NO STOCK':'LOW STOCK']);}
+  else if(type==='balance'){title='Balance Sheet — '+today;const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);cols=[['Type','Qty','Value (SAR)']];rows=[['Total Received (IN)',totalIn,S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0).toFixed(2)],['Total Issued (OUT)',totalOut,S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0).toFixed(2)],['Balance',totalIn-totalOut,'—']];}
+  pdfHdr(doc,title,true);
+  if(!rows.length)doc.text('No data available.',12,62);
+  else doc.autoTable({head:cols,body:rows,startY:56,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:8,right:8}});
+  pdfFtr(doc,true);doc.save('Ajanta_'+type+'_'+today+'.pdf');setMsg('rpt-msg','✓ PDF downloaded!','#4ade80');
 }
 
-// ═══════════════════════════════════════════
+function makeSitesPDF(){
+  const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');const today=new Date().toISOString().split('T')[0];
+  pdfHdr(doc,'Sites Inventory Report — '+today,true);
+  doc.autoTable({head:[['#','Item','Category','Eq.No','Site','Qty','Unit','Min Stock','Status']],body:S.tItems.map((i,n)=>[n+1,i.name,i.category||'',i.equipment_no||'',i.site,i.qty,i.unit,i.min_stock,i.qty<=i.min_stock?'LOW':'OK']),startY:56,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:8,right:8}});
+  pdfFtr(doc,true);doc.save('Ajanta_Sites_'+today+'.pdf');
+}
+
+function makeSitePDF(){
+  const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');const today=new Date().toISOString().split('T')[0];
+  pdfHdr(doc,S.curSite+' Inventory — '+today,true);
+  const data=S.tItems.filter(i=>i.site===S.curSite);
+  doc.autoTable({head:[['#','Item','Category','Eq.No','Qty','Unit','Min Stock','Status']],body:data.map((i,n)=>[n+1,i.name,i.category||'',i.equipment_no||'',i.qty,i.unit,i.min_stock,i.qty<=i.min_stock?'LOW':'OK']),startY:56,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:8,right:8}});
+  pdfFtr(doc,true);doc.save('Ajanta_'+S.curSite.replace(' ','_')+'_'+today+'.pdf');
+}
+
+function makeMDRPDF(){
+  const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');const today=new Date().toISOString().split('T')[0];
+  pdfHdr(doc,'MDR Issue Report — '+today,true);
+  doc.autoTable({head:[['#','MDR No','Date','From Site','To Location','Item','Eq.No','Qty','Receiver','Contact','Issued By']],body:S.mdrRecords.map((m,n)=>[n+1,m.mdr_records?.mdr_no||'',m.mdr_records?.mdr_date||'',m.mdr_records?.from_site||'',m.mdr_records?.to_location||'',m.inventory?.name||'',m.inventory?.equipment_no||'',m.quantity,m.mdr_records?.receiver_name||'',m.mdr_records?.receiver_contact||'',m.mdr_records?.issued_by||'']),startY:56,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255},alternateRowStyles:{fillColor:[240,245,255]},margin:{left:8,right:8}});
+  pdfFtr(doc,true);doc.save('Ajanta_MDR_'+today+'.pdf');
+}
+
+function makeProdPDF(){const pid=document.getElementById('rpt-pid').value;if(!pid){setMsg('rpt-msg','Select a product first!','#fca5a5');return;}const p=S.prods.find(x=>x.id===pid);const{jsPDF}=window.jspdf;const doc=new jsPDF();const today=new Date().toISOString().split('T')[0];pdfHdr(doc,'Product Report: '+p.description,false);doc.setFontSize(8);doc.text(`Code: ${p.item_code}  |  Eq.No: ${p.equipment_no||'—'}  |  Unit: ${p.unit}  |  Stock: ${p.quantity}  |  Price: SAR ${p.price_per_unit}`,12,55);doc.text(`Supplier: ${p.supplier_name||'—'}  |  Contact: ${p.supplier_contact||'—'}`,12,61);doc.text(`Location: ${p.location||'—'}  |  Status: ${p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW STOCK':'OK'}`,12,67);pdfFtr(doc,false);doc.save('Ajanta_Product_'+p.item_code+'_'+today+'.pdf');setMsg('rpt-msg','✓ PDF downloaded!','#4ade80');}
+
 // ADMIN
-// ═══════════════════════════════════════════
-async function loadUsers(){const r=await db('/rest/v1/profiles?select=*','GET',null,S.session?.access_token);if(r.ok&&r.data)S.tUsers=r.data;renderUserList();}
-function renderUserList(){document.getElementById('user-list').innerHTML=S.tUsers.map(u=>`<div class="urow"><div class="ui"><p>👤 ${u.name||u.email}</p><span>${u.email}</span></div><span class="rbadge r${u.role}">${u.role}</span></div>`).join('')||'<div style="color:var(--muted);text-align:center;padding:20px">Koi user nahi</div>';}
+async function loadUsers(){const r=await db('/rest/v1/profiles?select=*','GET',null,S.session?.access_token);if(r.ok&&r.data)S.tUsers=r.data;document.getElementById('user-list').innerHTML=S.tUsers.map(u=>`<div class="urow"><div class="ui"><p>👤 ${u.name||u.email}</p><span>${u.email}</span></div><span class="rbadge r${u.role}">${u.role}</span></div>`).join('')||'<div style="color:var(--muted);text-align:center;padding:16px">No users found</div>';}
 
-async function generateInvite(){
-  const role=document.getElementById('inv-role').value;
-  const code=Math.random().toString(36).slice(2,8).toUpperCase()+'-'+Math.random().toString(36).slice(2,5).toUpperCase();
-  await db('/rest/v1/invite_codes','POST',{code,role,used:false,created_by:S.profile?.email,created_at:new Date().toISOString(),expires_at:new Date(Date.now()+24*60*60*1000).toISOString()},S.session?.access_token);
-  const el=document.getElementById('inv-result');el.style.display='block';el.innerHTML=code+'<br><span style="font-size:11px;color:var(--muted);letter-spacing:0">Role: '+role+' • 24hr valid</span>';
-}
+async function generateInvite(){const role=document.getElementById('inv-role').value;const code=Math.random().toString(36).slice(2,8).toUpperCase()+'-'+Math.random().toString(36).slice(2,4).toUpperCase();await db('/rest/v1/invite_codes','POST',{code,role,used:false,created_by:S.profile?.email,created_at:new Date().toISOString(),expires_at:new Date(Date.now()+24*60*60*1000).toISOString()},S.session?.access_token);const el=document.getElementById('inv-result');el.style.display='block';el.innerHTML=code+'<br><span style="font-size:10px;color:var(--muted);letter-spacing:0">Role: '+role+' • 24hr valid</span>';}
 
-// ═══════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════
-function showPanel(name){
+// NAV
+function showPanel(name,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nitem').forEach(n=>{n.classList.remove('active-store');n.classList.remove('active-sites');});
-  const panel=document.getElementById('panel-'+name);
-  if(panel)panel.classList.add('active');
+  const panel=document.getElementById('panel-'+name);if(panel)panel.classList.add('active');
   const isStore=name.startsWith('s-');
-  const isSite=name.startsWith('t-');
-  event?.currentTarget?.classList.add(isStore?'active-store':'active-sites');
+  if(el)el.classList.add(isStore?'active-store':'active-sites');
   if(name==='t-charts')setTimeout(renderCharts,100);
-  if(name==='t-admin')loadUsers();
+  if(name==='t-admin'){loadUsers();renderSitesList();}
+  if(name==='s-balance')renderBalanceSheet();
 }
 
-function setMsg(id,msg,color){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=color;setTimeout(()=>el.textContent='',5000);}}
+function setMsg(id,msg,color){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=color;setTimeout(()=>{if(el)el.textContent='';},5000);}}
 </script>
 </body>
 </html>
