@@ -822,11 +822,9 @@ function renderSDash(){
     <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:16px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Total Value</div></div>`;
   
   // Balance mini
-  const totalRecvD=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
-  const totalOutD=S.issues.reduce((s,i)=>s+(+i.quantity),0);
+  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const currentStockD=S.prods.reduce((s,p)=>s+(+p.quantity),0);
-  const totalIn=totalRecvD>0?totalRecvD:currentStockD+totalOutD;
-  const totalOut=totalOutD;
   document.getElementById('s-balance-mini').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received (IN)</div><div class="bv2" style="color:#4ade80">${totalIn}</div><div class="bl">Units</div></div>
     <div class="bal-card out"><div class="bl">Total Issued (OUT)</div><div class="bv2" style="color:#fca5a5">${totalOut}</div><div class="bl">Units</div></div>
@@ -945,19 +943,17 @@ function renderRecvTable(){
 
 // BALANCE SHEET
 function renderBalanceSheet(){
-  // Total IN = receipts + initial stock (product qty + issues out)
-  const totalRecv=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  // Correct: IN = only from receipts table, OUT = issued items
+  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
-  // Current stock from products table
+  // Current balance = actual stock in products table
   const currentStock=S.prods.reduce((s,p)=>s+(+p.quantity),0);
-  // If no receipts, calculate: initial = current + issued
-  const totalIn=totalRecv>0?totalRecv:currentStock+totalOut;
-  const valIn=S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0)||S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
+  const valIn=S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0);
   const valOut=S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
   document.getElementById('bs-grid').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received IN</div><div class="bv2" style="color:#4ade80">${totalIn} units</div><div class="bl">SAR ${valIn.toFixed(2)}</div></div>
     <div class="bal-card out"><div class="bl">Total Issued OUT</div><div class="bv2" style="color:#fca5a5">${totalOut} units</div><div class="bl">SAR ${valOut.toFixed(2)}</div></div>
-    <div class="bal-card bal"><div class="bl">Balance Stock</div><div class="bv2" style="color:#fde68a">${totalIn-totalOut} units</div><div class="bl">SAR ${(valIn-valOut).toFixed(2)}</div></div>`;
+    <div class="bal-card bal"><div class="bl">Current Balance Stock</div><div class="bv2" style="color:#fde68a">${currentStock} units</div><div class="bl">SAR ${(currentStock>0?S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0):0).toFixed(2)}</div></div>`;
   document.getElementById('bs-in-tb').innerHTML=S.receipts.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${r.receipt_date||'—'}</td><td>${r.products?.item_code||'—'} - ${r.products?.description||'—'}</td><td style="color:#4ade80">+${r.quantity_received}</td><td>SAR ${((+r.price_per_unit)*(+r.quantity_received)).toFixed(2)}</td><td>${r.supplier_name||'—'}</td></tr>`).join('');
   document.getElementById('bs-out-tb').innerHTML=S.issues.slice(0,20).map((i,n)=>`<tr><td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.products?.item_code||'—'} - ${i.products?.description||'—'}</td><td style="color:#fca5a5">-${i.quantity}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.issue_site||'—'}</td></tr>`).join('');
 }
