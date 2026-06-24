@@ -244,7 +244,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <button class="nitem active-store" onclick="showPanel('s-dash',this)"><span class="nico">📊</span> Dashboard</button>
       <button class="nitem" onclick="showPanel('s-prod',this)"><span class="nico">📦</span> Product Entry</button>
       <button class="nitem" onclick="showPanel('s-issue',this)"><span class="nico">📤</span> Issue Items</button>
-      <button class="nitem" onclick="showPanel('s-recv',this)"><span class="nico">📥</span> Receive Stock</button>
+
       <button class="nitem" onclick="showPanel('s-stock',this)"><span class="nico">🗃️</span> Stock View</button>
       <button class="nitem" onclick="showPanel('s-balance',this)"><span class="nico">⚖️</span> Balance Sheet</button>
       <button class="nitem" onclick="showPanel('s-rpt',this)"><span class="nico">📋</span> Reports</button>
@@ -360,37 +360,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   </div>
 </div>
 
-<!-- ═══ RECEIVE STOCK ═══ -->
-<div class="panel" id="panel-s-recv">
-  <div class="ph"><h2>📥 Receive Stock</h2><p>Add new stock — balance sheet auto updates</p></div>
-  <div class="card">
-    <div class="ct orange">◆ Stock Receipt Entry</div>
-    <div class="fg">
-      <div class="fl"><label>Select Product *</label><select id="rv-prod"><option value="">-- Select Product --</option></select></div>
-      <div class="fl"><label>Quantity Received *</label><input id="rv-qty" type="number" placeholder="0" min="1"/></div>
-      <div class="fl"><label>Invoice No</label><input id="rv-inv" placeholder="Invoice number"/></div>
-      <div class="fl"><label>Supplier</label><input id="rv-sup" placeholder="Supplier name" oninput="acShow(this,'supplier_name','ac-rvsup');autoFillSupContact()" onblur="acHide('ac-rvsup')" onfocus="acShow(this,'supplier_name','ac-rvsup')"/><div class="ac-list" id="ac-rvsup"></div></div>
-      <div class="fl"><label>Price/Unit (SAR)</label><input id="rv-price" type="number" placeholder="0.00" step="0.01"/></div>
-      <div class="fl"><label>Supplier Contact</label><input id="rv-scon" placeholder="Auto-fill on supplier select"/></div>
-      <div class="fl"><label>Received By</label><input id="rv-by" placeholder="Name"/></div>
-      <div class="fl"><label>Date</label><input id="rv-date" type="date"/></div>
-      <div class="fl"><label>Remark</label><input id="rv-rem" placeholder="Optional"/></div>
-    </div>
-    <div class="br">
-      <button class="btn bs" onclick="saveReceive()">✓ Receive & Update Stock</button>
-      <button class="btn bd" onclick="clearRecv()">✕ Clear</button>
-    </div>
-    <div class="msg" id="rvmsg"></div>
-  </div>
-  <div class="card">
-    <div class="ct orange">◆ Receipt History</div>
-    <div class="tw"><table>
-      <thead><tr><th>#</th><th>Date</th><th>Item Code</th><th>Description</th><th>Qty Received</th><th>Price/Unit</th><th>Total Value</th><th>Invoice</th><th>Supplier</th><th>Received By</th><th>Remark</th></tr></thead>
-      <tbody id="recv-tb"></tbody>
-    </table></div>
-  </div>
-</div>
-
 <!-- ═══ STOCK VIEW ═══ -->
 <div class="panel" id="panel-s-stock">
   <div class="ph"><h2>🗃️ Stock View</h2><p>Complete store stock overview</p></div>
@@ -452,7 +421,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     <div class="br" style="flex-wrap:wrap">
       <button class="btn bg" onclick="exportStockCSV()">⬇ Stock CSV</button>
       <button class="btn bg" onclick="exportIssueCSV()">⬇ Issue CSV</button>
-      <button class="btn bg" onclick="exportRecvCSV()">⬇ Receipt CSV</button>
+
       <button class="btn bg" onclick="exportBalanceCSV()">⬇ Balance CSV</button>
     </div>
     <div class="ct orange" style="margin-top:14px">◆ Product-wise PDF</div>
@@ -769,7 +738,7 @@ async function loadAll(){
   const [pr,iss,rv,ac]=await Promise.all([
     db('/rest/v1/products?select=*&order=created_at.desc','GET',null,tok),
     db('/rest/v1/issue_items?select=*,issues(*),products(*)&order=created_at.desc','GET',null,tok),
-    db('/rest/v1/receipts?select=*,products(*)&order=created_at.desc','GET',null,tok),
+    Promise.resolve({ok:true,data:[]}),
     db('/rest/v1/autocomplete_data?select=*','GET',null,tok)
   ]);
   if(pr.ok&&pr.data)S.prods=pr.data;
@@ -822,7 +791,7 @@ function renderSDash(){
     <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:16px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Total Value</div></div>`;
   
   // Balance mini
-  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  const totalIn=S.prods.reduce((s,p)=>s+(+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0)),0);
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const currentStockD=S.prods.reduce((s,p)=>s+(+p.quantity),0);
   document.getElementById('s-balance-mini').innerHTML=`
@@ -943,18 +912,17 @@ function renderRecvTable(){
 
 // BALANCE SHEET
 function renderBalanceSheet(){
-  // Correct: IN = only from receipts table, OUT = issued items
-  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  // IN = total qty from product entry, OUT = total issued, Balance = current stock
+  const totalIn=S.prods.reduce((s,p)=>s+(+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0)),0);
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
-  // Current balance = actual stock in products table
   const currentStock=S.prods.reduce((s,p)=>s+(+p.quantity),0);
-  const valIn=S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0);
+  const valIn=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*((+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0))),0);
   const valOut=S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
   document.getElementById('bs-grid').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received IN</div><div class="bv2" style="color:#4ade80">${totalIn} units</div><div class="bl">SAR ${valIn.toFixed(2)}</div></div>
     <div class="bal-card out"><div class="bl">Total Issued OUT</div><div class="bv2" style="color:#fca5a5">${totalOut} units</div><div class="bl">SAR ${valOut.toFixed(2)}</div></div>
     <div class="bal-card bal"><div class="bl">Current Balance Stock</div><div class="bv2" style="color:#fde68a">${currentStock} units</div><div class="bl">SAR ${(currentStock>0?S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0):0).toFixed(2)}</div></div>`;
-  document.getElementById('bs-in-tb').innerHTML=S.receipts.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${r.receipt_date||'—'}</td><td>${r.products?.item_code||'—'} - ${r.products?.description||'—'}</td><td style="color:#4ade80">+${r.quantity_received}</td><td>SAR ${((+r.price_per_unit)*(+r.quantity_received)).toFixed(2)}</td><td>${r.supplier_name||'—'}</td></tr>`).join('');
+  document.getElementById('bs-in-tb').innerHTML=S.prods.slice(0,20).map((p,i)=>`<tr><td>${i+1}</td><td>${p.last_purchase||'—'}</td><td>${p.item_code||'—'} - ${p.description||'—'}</td><td style="color:#4ade80">+${(+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0))}</td><td>SAR ${((+p.price_per_unit)*((+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0)))).toFixed(2)}</td><td>${p.supplier_name||'—'}</td></tr>`).join('');
   document.getElementById('bs-out-tb').innerHTML=S.issues.slice(0,20).map((i,n)=>`<tr><td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.products?.item_code||'—'} - ${i.products?.description||'—'}</td><td style="color:#fca5a5">-${i.quantity}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.issue_site||'—'}</td></tr>`).join('');
 }
 
@@ -1122,7 +1090,7 @@ function exportSiteExcel(){const wb=XLSX.utils.book_new();const data=S.tItems.fi
 function exportSiteCSV(){csvDownload(S.tItems.filter(i=>i.site===S.curSite).map(i=>({'Item':i.name,'Eq.No':i.equipment_no||'','Qty':i.qty,'Unit':i.unit,'Status':i.qty<=i.min_stock?'LOW':'OK'})),'Ajanta_'+S.curSite.replace(' ','_'));}
 function exportStockCSV(){csvDownload(S.prods.map(p=>({'Code':p.item_code,'Eq.No':p.equipment_no||'','Invoice':p.invoice_no||'','Description':p.description,'Unit':p.unit,'Qty':p.quantity,'Price':p.price_per_unit,'Total':((+p.price_per_unit)*(+p.quantity)).toFixed(2),'Supplier':p.supplier_name||'','Status':p.quantity<=0?'NO STOCK':p.quantity<=10?'LOW':'OK'})),'Ajanta_Stock');}
 function exportIssueCSV(){csvDownload(S.issues.map(i=>({'Date':i.issues?.issue_date||'','Issued To':i.issues?.issued_to||'','Person ID':i.issues?.person_id||'','Site':i.issues?.issue_site||'','Item Code':i.products?.item_code||'','Description':i.products?.description||'','Qty':i.quantity,'Unit':i.products?.unit||'','Issued By':i.issues?.issued_by||'','Title':i.issues?.issued_by_title||''})),'Ajanta_Issues');}
-function exportRecvCSV(){csvDownload(S.receipts.map(r=>({'Date':r.receipt_date||'','Item Code':r.products?.item_code||'','Description':r.products?.description||'','Qty Received':r.quantity_received,'Price':r.price_per_unit,'Total':((+r.price_per_unit)*(+r.quantity_received)).toFixed(2),'Invoice':r.invoice_no||'','Supplier':r.supplier_name||'','Received By':r.received_by||''})),'Ajanta_Receipts');}
+function exportRecvCSV(){}
 function exportBalanceCSV(){const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);csvDownload([{Type:'Total Received IN',Quantity:totalIn,Value:S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0).toFixed(2)},{Type:'Total Issued OUT',Quantity:totalOut,Value:S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0).toFixed(2)},{Type:'Balance',Quantity:totalIn-totalOut,Value:''}],'Ajanta_Balance');}
 function exportMDRCSV(){csvDownload(S.mdrRecords.map(m=>({'MDR No':m.mdr_records?.mdr_no||'','Date':m.mdr_records?.mdr_date||'','From Site':m.mdr_records?.from_site||'','To Location':m.mdr_records?.to_location||'','Item':m.inventory?.name||'','Eq.No':m.inventory?.equipment_no||'','Qty':m.quantity,'Unit':m.inventory?.unit||'','Receiver':m.mdr_records?.receiver_name||'','Contact':m.mdr_records?.receiver_contact||'','Issued By':m.mdr_records?.issued_by||''})),'Ajanta_MDR');}
 
