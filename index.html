@@ -79,7 +79,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font)}
 .sc.red{border-color:#7f1d1d;background:#1a0808}.sc.yel{border-color:#92400e;background:#1a1208}.sc.grn{border-color:#065f46;background:#081a10}
 .sico{font-size:18px;margin-bottom:3px}
 .sv{font-size:22px;font-weight:800;color:#fff}
-.sl{font-size:9px;color:var(--muted);margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+.sl{font-size:9px;color:#e2e8f0;margin-top:1px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 
 /* CARD */
 .card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:10px}
@@ -369,8 +369,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Select Product *</label><select id="rv-prod"><option value="">-- Select Product --</option></select></div>
       <div class="fl"><label>Quantity Received *</label><input id="rv-qty" type="number" placeholder="0" min="1"/></div>
       <div class="fl"><label>Invoice No</label><input id="rv-inv" placeholder="Invoice number"/></div>
-      <div class="fl"><label>Supplier</label><input id="rv-sup" placeholder="Supplier name" oninput="acShow(this,'supplier_name','ac-rvsup')" onblur="acHide('ac-rvsup')" onfocus="acShow(this,'supplier_name','ac-rvsup')"/><div class="ac-list" id="ac-rvsup"></div></div>
+      <div class="fl"><label>Supplier</label><input id="rv-sup" placeholder="Supplier name" oninput="acShow(this,'supplier_name','ac-rvsup');autoFillSupContact()" onblur="acHide('ac-rvsup')" onfocus="acShow(this,'supplier_name','ac-rvsup')"/><div class="ac-list" id="ac-rvsup"></div></div>
       <div class="fl"><label>Price/Unit (SAR)</label><input id="rv-price" type="number" placeholder="0.00" step="0.01"/></div>
+      <div class="fl"><label>Supplier Contact</label><input id="rv-scon" placeholder="Auto-fill on supplier select"/></div>
       <div class="fl"><label>Received By</label><input id="rv-by" placeholder="Name"/></div>
       <div class="fl"><label>Date</label><input id="rv-date" type="date"/></div>
       <div class="fl"><label>Remark</label><input id="rv-rem" placeholder="Optional"/></div>
@@ -821,8 +822,11 @@ function renderSDash(){
     <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:16px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Total Value</div></div>`;
   
   // Balance mini
-  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
-  const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
+  const totalRecvD=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  const totalOutD=S.issues.reduce((s,i)=>s+(+i.quantity),0);
+  const currentStockD=S.prods.reduce((s,p)=>s+(+p.quantity),0);
+  const totalIn=totalRecvD>0?totalRecvD:currentStockD+totalOutD;
+  const totalOut=totalOutD;
   document.getElementById('s-balance-mini').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received (IN)</div><div class="bv2" style="color:#4ade80">${totalIn}</div><div class="bl">Units</div></div>
     <div class="bal-card out"><div class="bl">Total Issued (OUT)</div><div class="bv2" style="color:#fca5a5">${totalOut}</div><div class="bl">Units</div></div>
@@ -921,14 +925,14 @@ async function saveReceive(){
   if(!pid||!qty||qty<=0){setMsg('rvmsg','Select product and enter quantity!','#fca5a5');return;}
   const tok=S.session?.access_token;const p=S.prods.find(x=>x.id===pid);
   const price=parseFloat(document.getElementById('rv-price').value)||p?.price_per_unit||0;
-  const r=await db('/rest/v1/receipts','POST',{product_id:pid,quantity_received:qty,price_per_unit:price,invoice_no:document.getElementById('rv-inv').value.trim()||null,supplier_name:document.getElementById('rv-sup').value.trim()||null,received_by:document.getElementById('rv-by').value.trim()||null,receipt_date:document.getElementById('rv-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('rv-rem').value.trim()||null,created_at:new Date().toISOString()},tok);
+  const r=await db('/rest/v1/receipts','POST',{product_id:pid,quantity_received:qty,price_per_unit:price,invoice_no:document.getElementById('rv-inv').value.trim()||null,supplier_name:document.getElementById('rv-sup').value.trim()||null,supplier_contact:document.getElementById('rv-scon').value.trim()||null,received_by:document.getElementById('rv-by').value.trim()||null,receipt_date:document.getElementById('rv-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('rv-rem').value.trim()||null,created_at:new Date().toISOString()},tok);
   if(!r.ok){setMsg('rvmsg','Error saving receipt','#fca5a5');return;}
   // Update product qty
   if(p)await db(`/rest/v1/products?id=eq.${pid}`,'PATCH',{quantity:p.quantity+qty,price_per_unit:price||p.price_per_unit},tok);
   setMsg('rvmsg','✓ Stock received! Balance updated.','#4ade80');clearRecv();await loadAll();
 }
 
-function clearRecv(){['rv-qty','rv-inv','rv-sup','rv-price','rv-by','rv-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('rv-prod').value='';document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];}
+function clearRecv(){['rv-qty','rv-inv','rv-sup','rv-scon','rv-price','rv-by','rv-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('rv-prod').value='';document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];}
 
 function renderRecvTable(){
   document.getElementById('recv-tb').innerHTML=S.receipts.length?S.receipts.map((r,i)=>`<tr>
@@ -941,9 +945,14 @@ function renderRecvTable(){
 
 // BALANCE SHEET
 function renderBalanceSheet(){
-  const totalIn=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
+  // Total IN = receipts + initial stock (product qty + issues out)
+  const totalRecv=S.receipts.reduce((s,r)=>s+(+r.quantity_received),0);
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
-  const valIn=S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0);
+  // Current stock from products table
+  const currentStock=S.prods.reduce((s,p)=>s+(+p.quantity),0);
+  // If no receipts, calculate: initial = current + issued
+  const totalIn=totalRecv>0?totalRecv:currentStock+totalOut;
+  const valIn=S.receipts.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity_received),0)||S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
   const valOut=S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
   document.getElementById('bs-grid').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received IN</div><div class="bv2" style="color:#4ade80">${totalIn} units</div><div class="bl">SAR ${valIn.toFixed(2)}</div></div>
@@ -960,7 +969,7 @@ function renderStock(filter){
   const titles={all:'All Stock',ok:'In Stock',low:'Low Stock',out:'No Stock',dmg:'Damage/Reject'};
   document.getElementById('stock-title').textContent='◆ '+titles[filter];
   let d=S.prods;
-  if(filter==='ok')d=d.filter(p=>p.quantity>10&&p.status==='ok');
+  if(filter==='ok')d=d.filter(p=>p.quantity>0&&p.status==='ok');
   else if(filter==='low')d=d.filter(p=>p.quantity>0&&p.quantity<=10);
   else if(filter==='out')d=d.filter(p=>p.quantity<=0);
   else if(filter==='dmg')d=d.filter(p=>p.status==='damage'||p.status==='reject');
@@ -1182,6 +1191,14 @@ function showPanel(name,el){
   if(name==='t-charts')setTimeout(renderCharts,100);
   if(name==='t-admin'){loadUsers();renderSitesList();}
   if(name==='s-balance')renderBalanceSheet();
+}
+
+function autoFillSupContact(){
+  const supName=document.getElementById('rv-sup')?.value.trim();
+  if(!supName)return;
+  // Find contact from existing products
+  const prod=S.prods.find(p=>p.supplier_name&&p.supplier_name.toLowerCase()===supName.toLowerCase()&&p.supplier_contact);
+  if(prod){document.getElementById('rv-scon').value=prod.supplier_contact;}
 }
 
 function setMsg(id,msg,color){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=color;setTimeout(()=>{if(el)el.textContent='';},5000);}}
