@@ -791,9 +791,9 @@ function renderSDash(){
     <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:16px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Total Value</div></div>`;
   
   // Balance mini
-  const totalIn=S.prods.reduce((s,p)=>s+(+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0)),0);
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const currentStockD=S.prods.reduce((s,p)=>s+(+p.quantity),0);
+  const totalIn=currentStockD+totalOut;
   document.getElementById('s-balance-mini').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received (IN)</div><div class="bv2" style="color:#4ade80">${totalIn}</div><div class="bl">Units</div></div>
     <div class="bal-card out"><div class="bl">Total Issued (OUT)</div><div class="bv2" style="color:#fca5a5">${totalOut}</div><div class="bl">Units</div></div>
@@ -912,18 +912,28 @@ function renderRecvTable(){
 
 // BALANCE SHEET
 function renderBalanceSheet(){
-  // IN = total qty from product entry, OUT = total issued, Balance = current stock
-  const totalIn=S.prods.reduce((s,p)=>s+(+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0)),0);
-  const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
-  const currentStock=S.prods.reduce((s,p)=>s+(+p.quantity),0);
-  const valIn=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*((+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0))),0);
-  const valOut=S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
+  // PERMANENT FIX:
+  // Each product: original_entry = current_qty + qty_issued_from_this_product
+  // Total IN = sum of all original entries
+  // Total OUT = sum of all issued
+  // Balance = Total IN - Total OUT = current stock in products table
+
+  const totalOut = S.issues.reduce((s,i) => s + (+i.quantity), 0);
+  const currentStock = S.prods.reduce((s,p) => s + (+p.quantity), 0);
+  const totalIn = currentStock + totalOut; // original = remaining + issued
+  const currentVal = S.prods.reduce((s,p) => s + (+p.price_per_unit)*(+p.quantity), 0);
+  const valOut = S.issues.reduce((s,i) => s + (+(i.products?.price_per_unit||0))*(+i.quantity), 0);
+  const valIn = currentVal + valOut;
   document.getElementById('bs-grid').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received IN</div><div class="bv2" style="color:#4ade80">${totalIn} units</div><div class="bl">SAR ${valIn.toFixed(2)}</div></div>
     <div class="bal-card out"><div class="bl">Total Issued OUT</div><div class="bv2" style="color:#fca5a5">${totalOut} units</div><div class="bl">SAR ${valOut.toFixed(2)}</div></div>
-    <div class="bal-card bal"><div class="bl">Current Balance Stock</div><div class="bv2" style="color:#fde68a">${currentStock} units</div><div class="bl">SAR ${(currentStock>0?S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0):0).toFixed(2)}</div></div>`;
-  document.getElementById('bs-in-tb').innerHTML=S.prods.slice(0,20).map((p,i)=>`<tr><td>${i+1}</td><td>${p.last_purchase||'—'}</td><td>${p.item_code||'—'} - ${p.description||'—'}</td><td style="color:#4ade80">+${(+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0))}</td><td>SAR ${((+p.price_per_unit)*((+p.quantity)+(S.issues.filter(i=>i.product_id===p.id).reduce((a,i)=>a+(+i.quantity),0)))).toFixed(2)}</td><td>${p.supplier_name||'—'}</td></tr>`).join('');
-  document.getElementById('bs-out-tb').innerHTML=S.issues.slice(0,20).map((i,n)=>`<tr><td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.products?.item_code||'—'} - ${i.products?.description||'—'}</td><td style="color:#fca5a5">-${i.quantity}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.issue_site||'—'}</td></tr>`).join('');
+    <div class="bal-card bal"><div class="bl">Current Balance Stock</div><div class="bv2" style="color:#fde68a">${currentStock} units</div><div class="bl">SAR ${currentVal.toFixed(2)}</div></div>`;
+  document.getElementById('bs-in-tb').innerHTML=S.prods.slice(0,20).map((p,i)=>{
+    const issuedQty=S.issues.filter(x=>x.product_id===p.id).reduce((a,x)=>a+(+x.quantity),0);
+    const origQty=(+p.quantity)+issuedQty;
+    return `<tr><td>${i+1}</td><td>${p.last_purchase||'—'}</td><td>${p.item_code||'—'} - ${p.description||'—'}</td><td style="color:#4ade80">+${origQty}</td><td>SAR ${((+p.price_per_unit)*origQty).toFixed(2)}</td><td>${p.supplier_name||'—'}</td></tr>`;
+  }).join('');
+  document.getElementById('bs-out-tb').innerHTML=S.issues.slice(0,20).map((i,n)=>`<tr><td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.products?.item_code||'—'} - ${i.products?.description||'—'}</td><td style="color:#fca5a5">-${i.quantity}</td><td>SAR ${((+(i.products?.price_per_unit||0))*(+i.quantity)).toFixed(2)}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.issue_site||'—'}</td></tr>`).join('');
 }
 
 function renderRptTable(){
