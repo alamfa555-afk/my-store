@@ -287,6 +287,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     <div class="ct">◆ Supplier & Invoice Details</div>
     <div class="fg">
       <div class="fl">
+        <label>Invoice No *</label>
+        <input id="rv-inv" placeholder="e.g. INV-2024-001" oninput="acShow(this,'invoice_no','ac-rvinv')" onblur="acHide('ac-rvinv')" onfocus="acShow(this,'invoice_no','ac-rvinv')"/>
+        <div class="ac-list" id="ac-rvinv"></div>
+      </div>
+      <div class="fl">
         <label>Supplier Name *</label>
         <input id="rv-sup" placeholder="Supplier company name" oninput="acShow(this,'supplier_name','ac-rvsup');autoFillSupContact()" onblur="acHide('ac-rvsup')" onfocus="acShow(this,'supplier_name','ac-rvsup')"/>
         <div class="ac-list" id="ac-rvsup"></div>
@@ -294,11 +299,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl">
         <label>Supplier Contact</label>
         <input id="rv-scon" placeholder="Auto-fill or type contact no."/>
-      </div>
-      <div class="fl">
-        <label>Invoice No *</label>
-        <input id="rv-inv" placeholder="e.g. INV-2024-001" oninput="acShow(this,'invoice_no','ac-rvinv')" onblur="acHide('ac-rvinv')" onfocus="acShow(this,'invoice_no','ac-rvinv')"/>
-        <div class="ac-list" id="ac-rvinv"></div>
       </div>
       <div class="fl">
         <label>Receiving Date *</label>
