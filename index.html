@@ -388,9 +388,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">◆ Issue Details</div>
     <div class="fg">
-      <div class="fl"><label>Issued To *</label><input id="i-to" placeholder="Person / Department" oninput="acShow(this,'issued_to','ac-ito')" onblur="acHide('ac-ito')" onfocus="acShow(this,'issued_to','ac-ito')"/><div class="ac-list" id="ac-ito"></div></div>
-      <div class="fl"><label>Person ID</label><input id="i-pid" placeholder="e.g. EMP-001" oninput="acShow(this,'person_id','ac-pid')" onblur="acHide('ac-pid')" onfocus="acShow(this,'person_id','ac-pid')"/><div class="ac-list" id="ac-pid"></div></div>
+      <div class="fl"><label>MDR No.</label><input id="i-mdr" placeholder="e.g. MDR-2024-001" oninput="acShow(this,'mdr_no','ac-imdr')" onblur="acHide('ac-imdr')" onfocus="acShow(this,'mdr_no','ac-imdr')"/><div class="ac-list" id="ac-imdr"></div></div>
+      <div class="fl"><label>Issued To *</label><select id="i-to-type" onchange="toggleIssueTo()" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 10px;color:#fff;font-size:12px;outline:none;width:100%;margin-bottom:4px"><option value="employee">👤 Employee</option><option value="site">🏢 Site</option></select><input id="i-to" placeholder="Employee name / Site name" oninput="acShow(this,'issued_to','ac-ito')" onblur="acHide('ac-ito')" onfocus="acShow(this,'issued_to','ac-ito')"/><div class="ac-list" id="ac-ito"></div></div>
+      <div class="fl"><label>Person / Site ID</label><select id="i-pid-type" onchange="togglePID()" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 10px;color:#fff;font-size:12px;outline:none;width:100%;margin-bottom:4px"><option value="employee">Employee No.</option><option value="site">Site No.</option></select><input id="i-pid" placeholder="e.g. EMP-001 or SITE-A" oninput="acShow(this,'person_id','ac-pid')" onblur="acHide('ac-pid')" onfocus="acShow(this,'person_id','ac-pid')"/><div class="ac-list" id="ac-pid"></div></div>
       <div class="fl"><label>Receiver Contact</label><input id="i-rcon" placeholder="+966 5xx xxx xxxx" oninput="acShow(this,'receiver_contact','ac-ircon')" onblur="acHide('ac-ircon')" onfocus="acShow(this,'receiver_contact','ac-ircon')"/><div class="ac-list" id="ac-ircon"></div></div>
+      <div class="fl"><label>Receiver ID</label><input id="i-rid" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-irid')" onblur="acHide('ac-irid')" onfocus="acShow(this,'receiver_id','ac-irid')"/><div class="ac-list" id="ac-irid"></div></div>
 
       <div class="fl"><label>Issued By *</label><input id="i-by" placeholder="Issuer full name" oninput="acShow(this,'issued_by','ac-iby')" onblur="acHide('ac-iby')" onfocus="acShow(this,'issued_by','ac-iby')"/><div class="ac-list" id="ac-iby"></div></div>
       <div class="fl"><label>Issuer Title *</label><select id="i-title"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
@@ -413,7 +415,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <button class="btn bv bsm" onclick="makePDF('allissue')">⬇ PDF</button>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Date</th><th>Issued To</th><th>Person ID</th><th>Contact</th><th>Eq.No</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
+      <thead><tr><th>#</th><th>MDR No</th><th>Date</th><th>Issued To</th><th>Person/Site ID</th><th>Rcvr ID</th><th>Contact</th><th>Eq.No</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
       <tbody id="iss-tb"></tbody>
     </table></div>
   </div>
@@ -848,7 +850,7 @@ async function saveIssue(){
   }
   if(!items.length){setMsg('imsg','Add at least one item!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const r1=await db('/rest/v1/issues','POST',{issued_to:to,issued_by:by,issued_by_title:title,person_id:document.getElementById('i-pid').value.trim()||null,receiver_contact:document.getElementById('i-rcon').value.trim()||null,equipment_no:document.getElementById('i-eqno').value.trim()||null,issue_date:document.getElementById('i-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('i-rem').value.trim()||null},tok);
+  const r1=await db('/rest/v1/issues','POST',{mdr_no:document.getElementById('i-mdr').value.trim()||null,issued_to:to,issued_by:by,issued_by_title:title,person_id:document.getElementById('i-pid').value.trim()||null,receiver_contact:document.getElementById('i-rcon').value.trim()||null,receiver_id:document.getElementById('i-rid').value.trim()||null,issue_date:document.getElementById('i-date').value||new Date().toISOString().split('T')[0],remark:document.getElementById('i-rem').value.trim()||null},tok);
   if(!r1.ok){setMsg('imsg','Error creating issue','#fca5a5');return;}
   const issueId=r1.data?.[0]?.id||r1.data?.id;
   for(const it of items){
@@ -858,11 +860,11 @@ async function saveIssue(){
     const freshQty=fresh.ok&&fresh.data?.length?(+fresh.data[0].quantity):it.prod.quantity;
     await db(`/rest/v1/products?id=eq.${it.pid}`,'PATCH',{quantity:Math.max(0,freshQty-it.qty)},tok);
   }
-  await Promise.all([saveAC('issued_to',to),saveAC('issued_by',by),saveAC('person_id',document.getElementById('i-pid').value.trim()),saveAC('receiver_contact',document.getElementById('i-rcon').value.trim())]);
+  await Promise.all([saveAC('mdr_no',document.getElementById('i-mdr').value.trim()),saveAC('issued_to',to),saveAC('issued_by',by),saveAC('person_id',document.getElementById('i-pid').value.trim()),saveAC('receiver_contact',document.getElementById('i-rcon').value.trim()),saveAC('receiver_id',document.getElementById('i-rid').value.trim())]);
   setMsg('imsg','✅ Items issued! Stock updated.','#4ade80');clearIssue();await loadAll();
 }
 
-function clearIssue(){['i-to','i-by','i-pid','i-rcon','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
+function clearIssue(){['i-mdr','i-to','i-by','i-pid','i-rcon','i-rid','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
 
 function renderIssueTable(){
   document.getElementById('iss-tb').innerHTML=S.issues.length
@@ -1025,6 +1027,17 @@ function showPanel(name,el){
   if(name==='stock')renderStock('all');
 }
 
+function toggleIssueTo(){
+  const type=document.getElementById('i-to-type').value;
+  const inp=document.getElementById('i-to');
+  if(type==='employee'){inp.placeholder='Employee name';document.getElementById('i-pid-type').value='employee';togglePID();}
+  else{inp.placeholder='Site name e.g. Site A';document.getElementById('i-pid-type').value='site';togglePID();}
+}
+function togglePID(){
+  const type=document.getElementById('i-pid-type').value;
+  const inp=document.getElementById('i-pid');
+  inp.placeholder=type==='employee'?'Employee No. e.g. EMP-001':'Site No. e.g. SITE-A';
+}
 function setMsg(id,msg,color){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=color;setTimeout(()=>{if(el)el.textContent='';},5000);}}
 </script>
 </body>
