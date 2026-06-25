@@ -415,7 +415,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <button class="btn bv bsm" onclick="makePDF('allissue')">⬇ PDF</button>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>MDR No</th><th>Date</th><th>Issued To</th><th>Person/Site ID</th><th>Rcvr ID</th><th>Contact</th><th>Eq.No</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th></tr></thead>
+      <thead><tr><th>#</th><th>MDR No</th><th>Date</th><th>Issued To</th><th>Person/Site ID</th><th>Rcvr ID</th><th>Contact</th><th>Eq.No</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit</th><th>Issued By</th><th>Title</th><th>Remark</th><th>Action</th></tr></thead>
       <tbody id="iss-tb"></tbody>
     </table></div>
   </div>
@@ -837,6 +837,12 @@ function addIRow(){
 }
 
 async function saveIssue(){
+  // Check if in edit mode
+  const ilist=document.getElementById('ilist');
+  if(ilist.dataset.editIssueId){
+    await updateIssue(ilist.dataset.editIssueId,ilist.dataset.editItemId,ilist.dataset.editProductId,+ilist.dataset.editOldQty);
+    return;
+  }
   const to=document.getElementById('i-to').value.trim(),by=document.getElementById('i-by').value.trim(),title=document.getElementById('i-title').value;
   if(!to||!by||!title){setMsg('imsg','Issued To, Issued By and Title are required!','#fca5a5');return;}
   const rows=[...document.querySelectorAll('#ilist .ir')];const items=[];
@@ -874,6 +880,7 @@ function renderIssueTable(){
       <td><b>${i.products?.item_code||'—'}</b></td><td>${i.products?.description||'—'}</td>
       <td style="color:#fca5a5;font-weight:700">-${i.quantity}</td><td>${i.products?.unit||'—'}</td>
       <td>${i.issues?.issued_by||'—'}</td><td>${i.issues?.issued_by_title||'—'}</td><td>${i.issues?.remark||'—'}</td>
+      <td><button class="btn bp bsm" onclick="editIssue('${i.issues?.id}','${i.id}')">✏️</button> <button class="btn bd bsm" onclick="deleteIssueItem('${i.id}','${i.product_id||i.products?.id}',${i.quantity})">🗑️</button></td>
     </tr>`).join('')
     :'<tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">No issues found</td></tr>';
 }
@@ -1025,6 +1032,79 @@ function showPanel(name,el){
   if(name==='balance')renderBalance();
   if(name==='admin')loadUsers();
   if(name==='stock')renderStock('all');
+}
+
+async function updateIssue(issueId, itemId, productId, oldQty){
+  const to=document.getElementById('i-to').value.trim(),by=document.getElementById('i-by').value.trim(),title=document.getElementById('i-title').value;
+  if(!to||!by||!title){setMsg('imsg','Issued To, Issued By and Title required!','#fca5a5');return;}
+  const tok=S.session?.access_token;
+  const rows=[...document.querySelectorAll('#ilist .ir')];
+  const row=rows[0];if(!row)return;
+  const pid=row.querySelector('.isel').value;
+  const qty=parseFloat(row.querySelector('.iqty').value);
+  const eqno=row.querySelector('.ieqno')?.value.trim()||null;
+  if(!pid||!qty||qty<=0){setMsg('imsg','Select product and quantity!','#fca5a5');return;}
+  // Update issue record
+  await db(`/rest/v1/issues?id=eq.${issueId}`,'PATCH',{mdr_no:document.getElementById('i-mdr').value.trim()||null,issued_to:to,issued_by:by,issued_by_title:title,person_id:document.getElementById('i-pid').value.trim()||null,receiver_contact:document.getElementById('i-rcon').value.trim()||null,receiver_id:document.getElementById('i-rid').value.trim()||null,issue_date:document.getElementById('i-date').value,remark:document.getElementById('i-rem').value.trim()||null},tok);
+  // Update issue item
+  await db(`/rest/v1/issue_items?id=eq.${itemId}`,'PATCH',{product_id:pid,quantity:qty,equipment_no:eqno},tok);
+  // Restore old qty then deduct new qty
+  const fresh=await db(`/rest/v1/products?id=eq.${productId}&select=quantity`,'GET',null,tok);
+  if(fresh.ok&&fresh.data?.length){
+    const restored=(+fresh.data[0].quantity)+oldQty;
+    const newQty=Math.max(0,restored-qty);
+    await db(`/rest/v1/products?id=eq.${pid}`,'PATCH',{quantity:newQty},tok);
+  }
+  // Clear edit mode
+  document.getElementById('ilist').removeAttribute('data-edit-issue-id');
+  document.getElementById('ilist').removeAttribute('data-edit-item-id');
+  document.getElementById('ilist').removeAttribute('data-edit-product-id');
+  document.getElementById('ilist').removeAttribute('data-edit-old-qty');
+  setMsg('imsg','✅ Issue updated!','#4ade80');
+  clearIssue();await loadAll();
+}
+
+async function deleteIssueItem(itemId, productId, qty){
+  if(!confirm('Delete this issue record? Stock will be restored.'))return;
+  const tok=S.session?.access_token;
+  // Restore stock
+  const fresh=await db(`/rest/v1/products?id=eq.${productId}&select=quantity,id`,'GET',null,tok);
+  if(fresh.ok&&fresh.data?.length){
+    const newQty=(+fresh.data[0].quantity)+(+qty);
+    await db(`/rest/v1/products?id=eq.${productId}`,'PATCH',{quantity:newQty},tok);
+  }
+  await db(`/rest/v1/issue_items?id=eq.${itemId}`,'DELETE',null,tok);
+  setMsg('imsg','✅ Issue deleted & stock restored!','#4ade80');
+  await loadAll();
+}
+
+async function editIssue(issueId, itemId){
+  const issue=S.issues.find(i=>i.id===itemId);
+  if(!issue)return;
+  // Fill form with existing data
+  document.getElementById('i-mdr').value=issue.issues?.mdr_no||'';
+  document.getElementById('i-to').value=issue.issues?.issued_to||'';
+  document.getElementById('i-pid').value=issue.issues?.person_id||'';
+  document.getElementById('i-rcon').value=issue.issues?.receiver_contact||'';
+  document.getElementById('i-rid').value=issue.issues?.receiver_id||'';
+  document.getElementById('i-by').value=issue.issues?.issued_by||'';
+  document.getElementById('i-title').value=issue.issues?.issued_by_title||'';
+  document.getElementById('i-date').value=issue.issues?.issue_date||'';
+  document.getElementById('i-rem').value=issue.issues?.remark||'';
+  // Set editing flag
+  document.getElementById('ilist').innerHTML='';
+  const opts='<option value="">-- Select Product --</option>'+S.prods.map(p=>`<option value="${p.id}"${p.id===issue.product_id?` selected`:``}>[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</option>`).join('');
+  const d=document.createElement('div');d.className='ir';
+  d.innerHTML=`<select class="isel">${opts}</select><input type="number" class="iqty" value="${issue.quantity}" min="1" style="width:75px"/><input type="text" class="ieqno" value="${issue.equipment_no||''}" placeholder="Eq/Property No." style="width:140px"/><button class="btn bd bsm" onclick="this.closest('.ir').remove()">✕</button>`;
+  document.getElementById('ilist').appendChild(d);
+  // Store edit ids
+  document.getElementById('ilist').dataset.editIssueId=issueId;
+  document.getElementById('ilist').dataset.editItemId=itemId;
+  document.getElementById('ilist').dataset.editProductId=issue.product_id||issue.products?.id;
+  document.getElementById('ilist').dataset.editOldQty=issue.quantity;
+  // Scroll to form
+  document.querySelector('#panel-issue .card').scrollIntoView({behavior:'smooth'});
+  setMsg('imsg','⚠️ Editing issue — save to update','#fde68a');
 }
 
 function toggleIssueTo(){
