@@ -391,7 +391,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Issued To *</label><input id="i-to" placeholder="Person / Department" oninput="acShow(this,'issued_to','ac-ito')" onblur="acHide('ac-ito')" onfocus="acShow(this,'issued_to','ac-ito')"/><div class="ac-list" id="ac-ito"></div></div>
       <div class="fl"><label>Person ID</label><input id="i-pid" placeholder="e.g. EMP-001" oninput="acShow(this,'person_id','ac-pid')" onblur="acHide('ac-pid')" onfocus="acShow(this,'person_id','ac-pid')"/><div class="ac-list" id="ac-pid"></div></div>
       <div class="fl"><label>Receiver Contact</label><input id="i-rcon" placeholder="+966 5xx xxx xxxx" oninput="acShow(this,'receiver_contact','ac-ircon')" onblur="acHide('ac-ircon')" onfocus="acShow(this,'receiver_contact','ac-ircon')"/><div class="ac-list" id="ac-ircon"></div></div>
-      <div class="fl"><label>Equipment / Property No.</label><input id="i-eqno" placeholder="e.g. EQ-2024-001 (if applicable)" oninput="acShow(this,'equipment_no','ac-ieq')" onblur="acHide('ac-ieq')" onfocus="acShow(this,'equipment_no','ac-ieq')"/><div class="ac-list" id="ac-ieq"></div></div>
+
       <div class="fl"><label>Issued By *</label><input id="i-by" placeholder="Issuer full name" oninput="acShow(this,'issued_by','ac-iby')" onblur="acHide('ac-iby')" onfocus="acShow(this,'issued_by','ac-iby')"/><div class="ac-list" id="ac-iby"></div></div>
       <div class="fl"><label>Issuer Title *</label><select id="i-title"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
       <div class="fl"><label>Issue Date</label><input id="i-date" type="date"/></div>
@@ -830,7 +830,7 @@ async function delP(id){if(!confirm('Delete this product?'))return;await db(`/re
 function addIRow(){
   const opts='<option value="">-- Select Product --</option>'+S.prods.map(p=>`<option value="${p.id}">[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</option>`).join('');
   const d=document.createElement('div');d.className='ir';
-  d.innerHTML=`<select class="isel">${opts}</select><input type="number" class="iqty" placeholder="Qty" min="1" style="width:80px"/><button class="btn bd bsm" onclick="this.closest('.ir').remove()">✕</button>`;
+  d.innerHTML=`<select class="isel">${opts}</select><input type="number" class="iqty" placeholder="Qty" min="1" style="width:75px"/><input type="text" class="ieqno" placeholder="Eq/Property No." style="width:140px"/><button class="btn bd bsm" onclick="this.closest('.ir').remove()">✕</button>`;
   document.getElementById('ilist').appendChild(d);
 }
 
@@ -843,7 +843,8 @@ async function saveIssue(){
     if(!pid||!qty||qty<=0)continue;
     const p=S.prods.find(x=>x.id===pid);if(!p)continue;
     if(qty>p.quantity){setMsg('imsg',`Not enough stock for ${p.item_code}! Available: ${p.quantity}`,'#fca5a5');return;}
-    items.push({pid,qty,prod:p});
+    const eqno=r.querySelector('.ieqno')?.value.trim()||null;
+    items.push({pid,qty,prod:p,eqno});
   }
   if(!items.length){setMsg('imsg','Add at least one item!','#fca5a5');return;}
   const tok=S.session?.access_token;
@@ -851,17 +852,17 @@ async function saveIssue(){
   if(!r1.ok){setMsg('imsg','Error creating issue','#fca5a5');return;}
   const issueId=r1.data?.[0]?.id||r1.data?.id;
   for(const it of items){
-    await db('/rest/v1/issue_items','POST',{issue_id:issueId,product_id:it.pid,quantity:it.qty},tok);
+    await db('/rest/v1/issue_items','POST',{issue_id:issueId,product_id:it.pid,quantity:it.qty,equipment_no:it.eqno||null},tok);
     // Fetch fresh qty from DB before deducting
     const fresh=await db(`/rest/v1/products?id=eq.${it.pid}&select=quantity`,'GET',null,tok);
     const freshQty=fresh.ok&&fresh.data?.length?(+fresh.data[0].quantity):it.prod.quantity;
     await db(`/rest/v1/products?id=eq.${it.pid}`,'PATCH',{quantity:Math.max(0,freshQty-it.qty)},tok);
   }
-  await Promise.all([saveAC('issued_to',to),saveAC('issued_by',by),saveAC('person_id',document.getElementById('i-pid').value.trim()),saveAC('receiver_contact',document.getElementById('i-rcon').value.trim()),saveAC('equipment_no',document.getElementById('i-eqno').value.trim())]);
+  await Promise.all([saveAC('issued_to',to),saveAC('issued_by',by),saveAC('person_id',document.getElementById('i-pid').value.trim()),saveAC('receiver_contact',document.getElementById('i-rcon').value.trim())]);
   setMsg('imsg','✅ Items issued! Stock updated.','#4ade80');clearIssue();await loadAll();
 }
 
-function clearIssue(){['i-to','i-by','i-pid','i-rcon','i-eqno','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
+function clearIssue(){['i-to','i-by','i-pid','i-rcon','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
 
 function renderIssueTable(){
   document.getElementById('iss-tb').innerHTML=S.issues.length
