@@ -290,9 +290,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Equipment / Property No.</label><input id="f-eqno" placeholder="e.g. EQ-2024-001" oninput="acShow(this,'equipment_no','ac-eq')" onblur="acHide('ac-eq')" onfocus="acShow(this,'equipment_no','ac-eq')"/><div class="ac-list" id="ac-eq"></div></div>
       <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
 
+      <div class="fl"><label>Received By</label><input id="f-recvby" placeholder="Full name" oninput="acShow(this,'received_by','ac-recvby');autoFillReceiverID()" onblur="acHide('ac-recvby')" onfocus="acShow(this,'received_by','ac-recvby')"/><div class="ac-list" id="ac-recvby"></div></div>
+      <div class="fl"><label>Receiver ID No.</label><input id="f-receiver" placeholder="Auto-fill or type ID" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
       <div class="fl"><label>Receiving Date</label><input id="f-date" type="date"/></div>
-      <div class="fl"><label>Received By</label><input id="f-recvby" placeholder="Full name" oninput="acShow(this,'received_by','ac-recvby')" onblur="acHide('ac-recvby')" onfocus="acShow(this,'received_by','ac-recvby')"/><div class="ac-list" id="ac-recvby"></div></div>
-      <div class="fl"><label>Receiver ID No.</label><input id="f-receiver" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
       <div class="fl"><label>Receiver Status</label><select id="f-rstatus"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
 
 
@@ -309,7 +309,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">◆ All Products</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Date</th><th>Received By</th><th>Rcvr ID</th><th>Status</th><th>Location</th><th>Remark</th><th>Action</th></tr></thead>
+      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Received By</th><th>Rcvr ID</th><th>Recv Date</th><th>Status</th><th>Location</th><th>Remark</th><th>Action</th></tr></thead>
       <tbody id="prod-tb"></tbody>
     </table></div>
   </div>
@@ -594,6 +594,14 @@ function acShow(inp,field,listId){
 function acHide(id){setTimeout(()=>{const l=document.getElementById(id);if(l)l.classList.remove('show');},200);}
 function pickAC(inpId,listId,val){document.getElementById(inpId).value=val;acHide(listId);}
 
+function autoFillReceiverID(){
+  const name = document.getElementById('f-recvby')?.value.trim();
+  if(!name) return;
+  // Find matching receiver_id from existing products
+  const match = S.prods.find(p => p.received_by && p.received_by.toLowerCase() === name.toLowerCase() && p.receiver_id);
+  if(match) document.getElementById('f-receiver').value = match.receiver_id;
+}
+
 function autoFillSupContact(){
   const name=document.getElementById('rv-sup')?.value.trim();if(!name)return;
   const p=S.prods.find(x=>x.supplier_name?.toLowerCase()===name.toLowerCase()&&x.supplier_contact);
@@ -742,7 +750,7 @@ async function saveProduct(){
   if(eid)res=await db(`/rest/v1/products?id=eq.${eid}`,'PATCH',obj,tok);
   else{const ex=S.prods.find(p=>p.item_code===code);if(ex)res=await db(`/rest/v1/products?id=eq.${ex.id}`,'PATCH',obj,tok);else res=await db('/rest/v1/products','POST',obj,tok);}
   if(!res.ok){setMsg('pmsg','Error saving product','#fca5a5');return;}
-  await Promise.all([saveAC('item_code',code),saveAC('description',desc),saveAC('invoice_no',obj.invoice_no),saveAC('equipment_no',obj.equipment_no),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('supplier_contact',obj.supplier_contact),saveAC('receiver_id',obj.receiver_id),saveAC('received_by',obj.received_by),saveAC('signature_name',obj.signature_name)]);
+  await Promise.all([saveAC('item_code',code),saveAC('description',desc),saveAC('invoice_no',obj.invoice_no),saveAC('equipment_no',obj.equipment_no),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('receiver_id',obj.receiver_id),saveAC('received_by',obj.received_by),saveAC('received_by',obj.received_by)]);
   setMsg('pmsg','✅ Product saved!','#4ade80');clearProd();await loadAll();
 }
 
@@ -755,7 +763,7 @@ function renderProdTable(){
       <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.equipment_no||'—'}</td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
       <td style="color:${+p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
       <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td>
-      <td>${p.last_purchase||'—'}</td><td>${p.received_by||'—'}</td><td>${p.receiver_id||'—'}</td><td>${badge(p)}</td>
+      <td>${p.received_by||'—'}</td><td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td><td>${badge(p)}</td>
       <td>${p.location||'—'}</td><td>${p.remark||'—'}</td>
       <td>${canEdit?`<button class="btn bp bsm" onclick="editP('${p.id}')">✏️</button> <button class="btn bd bsm" onclick="delP('${p.id}')">🗑️</button>`:'—'}</td>
     </tr>`).join('')
