@@ -309,7 +309,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">◆ All Products</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Received By</th><th>Rcvr ID</th><th>Recv Date</th><th>Status</th><th>Location</th><th>Remark</th><th>Action</th></tr></thead>
+      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Total Amount</th><th>Supplier</th><th>Received By</th><th>Rcvr ID</th><th>Recv Date</th><th>Status</th><th>Location</th><th>Remark</th><th>Action</th></tr></thead>
       <tbody id="prod-tb"></tbody>
     </table></div>
   </div>
@@ -762,12 +762,12 @@ function renderProdTable(){
     ?S.prods.map((p,i)=>`<tr>
       <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.equipment_no||'—'}</td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
       <td style="color:${+p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
-      <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>${p.supplier_name||'—'}</td>
+      <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td style="color:#fde68a;font-weight:700">SAR ${((+p.price_per_unit)*(+p.quantity)).toFixed(2)}</td><td>${p.supplier_name||'—'}</td>
       <td>${p.received_by||'—'}</td><td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td><td>${badge(p)}</td>
       <td>${p.location||'—'}</td><td>${p.remark||'—'}</td>
       <td>${canEdit?`<button class="btn bp bsm" onclick="editP('${p.id}')">✏️</button> <button class="btn bd bsm" onclick="delP('${p.id}')">🗑️</button>`:'—'}</td>
     </tr>`).join('')
-    :'<tr><td colspan="16" style="text-align:center;color:#334155;padding:20px">No products found</td></tr>';
+    :'<tr><td colspan="17" style="text-align:center;color:#334155;padding:20px">No products found</td></tr>';
 }
 
 function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-recvby').value=p.received_by||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-rstatus').value=p.receiver_status||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('products',null);window.scrollTo(0,0);}
