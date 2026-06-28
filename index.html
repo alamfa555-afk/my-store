@@ -821,14 +821,24 @@ function clearIssue(){['i-mdr','i-to','i-by','i-pid','i-rcon','i-rid','i-rem'].f
 function renderIssueTable(){
   document.getElementById('iss-tb').innerHTML=S.issues.length
     ?S.issues.map((i,n)=>`<tr>
-      <td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.issues?.issued_to||'—'}</td><td>${i.issues?.person_id||'—'}</td>
-      <td>${i.issues?.receiver_contact||'—'}</td><td>${i.issues?.equipment_no||'—'}</td>
-      <td><b>${i.products?.item_code||'—'}</b></td><td>${i.products?.description||'—'}</td>
-      <td style="color:#fca5a5;font-weight:700">-${i.quantity}</td><td>${i.products?.unit||'—'}</td>
-      <td>${i.issues?.issued_by||'—'}</td><td>${i.issues?.issued_by_title||'—'}</td><td>${i.issues?.remark||'—'}</td>
+      <td>${n+1}</td>
+      <td><b>${i.issues?.mdr_no||'—'}</b></td>
+      <td>${i.issues?.issue_date||'—'}</td>
+      <td>${i.issues?.issued_to||'—'}</td>
+      <td>${i.issues?.person_id||'—'}</td>
+      <td>${i.issues?.receiver_id||'—'}</td>
+      <td>${i.issues?.receiver_contact||'—'}</td>
+      <td>${i.equipment_no||i.issues?.equipment_no||'—'}</td>
+      <td><b>${i.products?.item_code||'—'}</b></td>
+      <td>${i.products?.description||'—'}</td>
+      <td style="color:#fca5a5;font-weight:700">-${i.quantity}</td>
+      <td>${i.products?.unit||'—'}</td>
+      <td>${i.issues?.issued_by||'—'}</td>
+      <td>${i.issues?.issued_by_title||'—'}</td>
+      <td>${i.issues?.remark||'—'}</td>
       <td><button class="btn bp bsm" onclick="editIssue('${i.issues?.id}','${i.id}')">✏️</button> <button class="btn bd bsm" onclick="deleteIssueItem('${i.id}','${i.product_id||i.products?.id}',${i.quantity})">🗑️</button></td>
     </tr>`).join('')
-    :'<tr><td colspan="13" style="text-align:center;color:#334155;padding:20px">No issues found</td></tr>';
+    :'<tr><td colspan="16" style="text-align:center;color:#334155;padding:20px">No issues found</td></tr>';
 }
 
 // ═══ STOCK VIEW ═══
