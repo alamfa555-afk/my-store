@@ -72,7 +72,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font)}
 .ph p{color:var(--muted);font-size:11px;margin-top:2px}
 
 /* STATS */
-.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.sg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
 .sc{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px}
 .sc.red{border-color:#7f1d1d;background:#1a0808}
 .sc.yel{border-color:#92400e;background:#1a1208}
@@ -310,6 +310,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
         <div class="ac-list" id="ac-rvby"></div>
       </div>
       <div class="fl">
+        <label>Receiver ID No.</label>
+        <input id="rv-rid" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-rvrid')" onblur="acHide('ac-rvrid')" onfocus="acShow(this,'receiver_id','ac-rvrid')"/>
+        <div class="ac-list" id="ac-rvrid"></div>
+      </div>
+      <div class="fl">
+        <label>Receiver Status</label>
+        <select id="rv-status"><option value="">-- Select Status --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select>
+      </div>
+      <div class="fl">
         <label>Signature (Name)</label>
         <input id="rv-sign" placeholder="Authorized signatory name" oninput="acShow(this,'signature_name','ac-rvsign')" onblur="acHide('ac-rvsign')" onfocus="acShow(this,'signature_name','ac-rvsign')"/>
         <div class="ac-list" id="ac-rvsign"></div>
@@ -338,7 +347,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     </div>
     <div class="tw">
       <table>
-        <thead><tr><th>#</th><th>Date</th><th>Supplier</th><th>Contact</th><th>Invoice</th><th>Description</th><th>Qty</th><th>Unit</th><th>Price/Unit</th><th>Total</th><th>Quality</th><th>Eq.No</th><th>Received By</th><th>Signature</th><th>Remark</th></tr></thead>
+        <thead><tr><th>#</th><th>Date</th><th>Supplier</th><th>Contact</th><th>Invoice</th><th>Description</th><th>Qty</th><th>Unit</th><th>Price/Unit</th><th>Total</th><th>Quality</th><th>Received By</th><th>ID No.</th><th>Status</th><th>Signature</th><th>Remark</th></tr></thead>
         <tbody id="recv-tb"></tbody>
       </table>
     </div>
@@ -681,11 +690,12 @@ function renderDash(){
   const low=S.prods.filter(p=>+p.quantity>0&&+p.quantity<=10).length;
   const noStock=S.prods.filter(p=>+p.quantity<=0).length;
   const totalVal=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
+  const recvVal=S.recvs.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity),0);
   document.getElementById('dash-stats').innerHTML=`
     <div class="sc"><div class="sico">📦</div><div class="sv">${total}</div><div class="sl">Total Products</div></div>
     <div class="sc yel"><div class="sico">⚠️</div><div class="sv" style="color:#fde68a">${low}</div><div class="sl">Low Stock</div></div>
     <div class="sc red"><div class="sico">🚫</div><div class="sv" style="color:#fca5a5">${noStock}</div><div class="sl">No Stock</div></div>
-    <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:18px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Total Value</div></div>`;
+    <div class="sc grn"><div class="sico">💰</div><div class="sv" style="color:#4ade80;font-size:14px">SAR ${totalVal.toFixed(0)}</div><div class="sl">Stock Value</div></div><div class="sc pur"><div class="sico">📥</div><div class="sv" style="color:#d8b4fe;font-size:14px">SAR ${recvVal.toFixed(0)}</div><div class="sl">Received Value</div></div>`;
 
   // Balance on dashboard
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
@@ -721,6 +731,7 @@ function addRecvRow(){
     <div style="padding-top:16px"><button class="btn bd bsm" onclick="this.closest('.recv-row').remove()">✕</button></div>
   </div>`;
   document.getElementById('recv-items-list').appendChild(d);
+  setTimeout(()=>d.querySelector('.rdesc')?.focus(),50);
 }
 
 function acShowInp(inp,field){
@@ -762,20 +773,21 @@ async function saveReceiving(){
   for(const it of items){
     await db('/rest/v1/receivings','POST',{
       supplier_name:sup,supplier_contact:scon||null,invoice_no:inv,
-      receiving_date:date,received_by:by,signature_name:sign||null,
+      receiving_date:date,received_by:by,receiver_id:document.getElementById('rv-rid').value.trim()||null,receiver_status:document.getElementById('rv-status').value||null,signature_name:sign||null,
       description:it.description,quantity:it.quantity,unit:it.unit,
       price_per_unit:it.price_per_unit,quality:it.quality,
       remark:rem||null,created_at:new Date().toISOString()
     },tok);
   }
   // Save autocomplete
-  await Promise.all([saveAC('supplier_name',sup),saveAC('supplier_contact',scon),saveAC('invoice_no',inv),saveAC('received_by',by),saveAC('signature_name',sign),...items.map(it=>saveAC('description',it.description))]);
+  await Promise.all([saveAC('supplier_name',sup),saveAC('supplier_contact',scon),saveAC('invoice_no',inv),saveAC('received_by',by),saveAC('receiver_id',document.getElementById('rv-rid').value.trim()),saveAC('signature_name',sign),...items.map(it=>saveAC('description',it.description))]);
   setMsg('rvmsg','✅ Receiving saved successfully!','#4ade80');
   clearReceiving();await loadAll();
 }
 
 function clearReceiving(){
-  ['rv-sup','rv-scon','rv-inv','rv-by','rv-sign','rv-rem'].forEach(id=>document.getElementById(id).value='');
+  ['rv-sup','rv-scon','rv-inv','rv-by','rv-rid','rv-sign','rv-rem'].forEach(id=>document.getElementById(id).value='');
+  const rvst=document.getElementById('rv-status');if(rvst)rvst.value='';
   document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('recv-items-list').innerHTML='';addRecvRow();
 }
@@ -784,7 +796,7 @@ function renderRecvTable(){
   document.getElementById('recv-tb').innerHTML=S.recvs.length
     ?S.recvs.map((r,i)=>{
       const qc=r.quality==='ok'?'<span class="q-ok">✅ OK</span>':r.quality==='damage'?'<span class="q-dmg">⚠️ Damage</span>':'<span class="q-rej">❌ Reject</span>';
-      return`<tr><td>${i+1}</td><td>${r.receiving_date||'—'}</td><td>${r.supplier_name||'—'}</td><td>${r.supplier_contact||'—'}</td><td>${r.invoice_no||'—'}</td><td>${r.description||'—'}</td><td style="color:#4ade80;font-weight:700">+${r.quantity}</td><td>${r.unit||'—'}</td><td>SAR ${(+r.price_per_unit).toFixed(2)}</td><td>SAR ${((+r.price_per_unit)*(+r.quantity)).toFixed(2)}</td><td>${qc}</td><td>${r.equipment_no||'—'}</td><td>${r.received_by||'—'}</td><td>${r.signature_name||'—'}</td><td>${r.remark||'—'}</td></tr>`;
+      return`<tr><td>${i+1}</td><td>${r.receiving_date||'—'}</td><td>${r.supplier_name||'—'}</td><td>${r.supplier_contact||'—'}</td><td>${r.invoice_no||'—'}</td><td>${r.description||'—'}</td><td style="color:#4ade80;font-weight:700">+${r.quantity}</td><td>${r.unit||'—'}</td><td>SAR ${(+r.price_per_unit).toFixed(2)}</td><td>SAR ${((+r.price_per_unit)*(+r.quantity)).toFixed(2)}</td><td>${qc}</td><td>${r.received_by||'—'}</td><td>${r.receiver_id||'—'}</td><td>${r.receiver_status||'—'}</td><td>${r.signature_name||'—'}</td><td>${r.remark||'—'}</td></tr>`;
     }).join('')
     :'<tr><td colspan="15" style="text-align:center;color:#334155;padding:20px">No receiving records yet</td></tr>';
 }
@@ -988,14 +1000,14 @@ function makePDF(type){
   }
   pdfH(doc,title);
   if(!rows.length)doc.text('No data available.',12,60);
-  else doc.autoTable({head:cols,body:rows,startY:54,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[245,248,255]},margin:{left:8,right:8}});
+  else doc.autoTable({head:cols,body:rows,startY:54,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,237,255]},bodyStyles:{textColor:[10,10,10]},margin:{left:8,right:8}});
   pdfF(doc);doc.save('Ajanta_'+type+'_'+today+'.pdf');setMsg('rpt-msg','✅ PDF downloaded!','#4ade80');
 }
 
 function makeRecvPDF(){
   const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');const today=new Date().toISOString().split('T')[0];
   pdfH(doc,'Receiving Report — '+today);
-  doc.autoTable({head:[['#','Date','Supplier','Contact','Invoice','Description','Qty','Unit','Price','Total','Quality','Received By','Signature','Remark']],body:S.recvs.map((r,i)=>[i+1,r.receiving_date||'',r.supplier_name||'',r.supplier_contact||'',r.invoice_no||'',r.description||'',r.quantity,r.unit||'',(+r.price_per_unit).toFixed(2),((+r.price_per_unit)*(+r.quantity)).toFixed(2),(r.quality||'').toUpperCase(),r.received_by||'',r.signature_name||'',r.remark||'']),startY:54,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[245,248,255]},margin:{left:8,right:8}});
+  doc.autoTable({head:[['#','Date','Supplier','Contact','Invoice','Description','Qty','Unit','Price','Total','Quality','Received By','Signature','Remark']],body:S.recvs.map((r,i)=>[i+1,r.receiving_date||'',r.supplier_name||'',r.supplier_contact||'',r.invoice_no||'',r.description||'',r.quantity,r.unit||'',(+r.price_per_unit).toFixed(2),((+r.price_per_unit)*(+r.quantity)).toFixed(2),(r.quality||'').toUpperCase(),r.received_by||'',r.signature_name||'',r.remark||'']),startY:54,styles:{fontSize:7,cellPadding:2},headStyles:{fillColor:[10,15,30],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[230,237,255]},bodyStyles:{textColor:[10,10,10]},margin:{left:8,right:8}});
   pdfF(doc);doc.save('Ajanta_Receiving_'+today+'.pdf');
 }
 
