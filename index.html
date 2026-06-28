@@ -762,7 +762,7 @@ function renderProdTable(){
     ?S.prods.map((p,i)=>`<tr>
       <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.equipment_no||'—'}</td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
       <td style="color:${+p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
-      <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td>
+      <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>${p.supplier_name||'—'}</td>
       <td>${p.received_by||'—'}</td><td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td><td>${badge(p)}</td>
       <td>${p.location||'—'}</td><td>${p.remark||'—'}</td>
       <td>${canEdit?`<button class="btn bp bsm" onclick="editP('${p.id}')">✏️</button> <button class="btn bd bsm" onclick="delP('${p.id}')">🗑️</button>`:'—'}</td>
