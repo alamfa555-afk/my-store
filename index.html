@@ -289,13 +289,13 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Price/Unit (SAR)</label><input id="f-price" type="number" placeholder="0.00" min="0" step="0.01"/></div>
       <div class="fl"><label>Equipment / Property No.</label><input id="f-eqno" placeholder="e.g. EQ-2024-001" oninput="acShow(this,'equipment_no','ac-eq')" onblur="acHide('ac-eq')" onfocus="acShow(this,'equipment_no','ac-eq')"/><div class="ac-list" id="ac-eq"></div></div>
       <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
-      <div class="fl"><label>Supplier Contact</label><input id="f-supcon" placeholder="+966 5xx xxx xxxx" oninput="acShow(this,'supplier_contact','ac-scon')" onblur="acHide('ac-scon')" onfocus="acShow(this,'supplier_contact','ac-scon')"/><div class="ac-list" id="ac-scon"></div></div>
+
       <div class="fl"><label>Receiving Date</label><input id="f-date" type="date"/></div>
       <div class="fl"><label>Received By</label><input id="f-recvby" placeholder="Full name" oninput="acShow(this,'received_by','ac-recvby')" onblur="acHide('ac-recvby')" onfocus="acShow(this,'received_by','ac-recvby')"/><div class="ac-list" id="ac-recvby"></div></div>
       <div class="fl"><label>Receiver ID No.</label><input id="f-receiver" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
       <div class="fl"><label>Receiver Status</label><select id="f-rstatus"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
-      <div class="fl"><label>Quality Check</label><select id="f-quality"><option value="ok">✅ OK</option><option value="damage">⚠️ Damage</option><option value="reject">❌ Reject</option></select></div>
-      <div class="fl"><label>Signature (Name)</label><input id="f-sign" placeholder="Authorized signatory" oninput="acShow(this,'signature_name','ac-sign')" onblur="acHide('ac-sign')" onfocus="acShow(this,'signature_name','ac-sign')"/><div class="ac-list" id="ac-sign"></div></div>
+
+
       <div class="fl"><label>Location</label><input id="f-loc" placeholder="Warehouse / Shelf" oninput="acShow(this,'location','ac-loc')" onblur="acHide('ac-loc')" onfocus="acShow(this,'location','ac-loc')"/><div class="ac-list" id="ac-loc"></div></div>
       <div class="fl"><label>Status</label><select id="f-status"><option value="ok">OK</option><option value="damage">Damage</option><option value="reject">Reject</option><option value="expiry">Expiry</option></select></div>
       <div class="fl"><label>Remark</label><input id="f-rem" placeholder="Any remarks"/></div>
@@ -309,7 +309,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">◆ All Products</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Contact</th><th>Date</th><th>Received By</th><th>Rcvr ID</th><th>Status</th><th>Quality</th><th>Signature</th><th>Location</th><th>Remark</th><th>Action</th></tr></thead>
+      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Date</th><th>Received By</th><th>Rcvr ID</th><th>Status</th><th>Location</th><th>Remark</th><th>Action</th></tr></thead>
       <tbody id="prod-tb"></tbody>
     </table></div>
   </div>
@@ -736,7 +736,7 @@ async function saveProduct(){
   const code=document.getElementById('f-code').value.trim(),desc=document.getElementById('f-desc').value.trim(),unit=document.getElementById('f-unit').value;
   if(!code||!desc||!unit){setMsg('pmsg','Item Code, Description and Unit are required!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,equipment_no:document.getElementById('f-eqno').value.trim()||null,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,supplier_contact:document.getElementById('f-supcon').value.trim()||null,last_purchase:document.getElementById('f-date').value||null,received_by:document.getElementById('f-recvby').value.trim()||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,receiver_status:document.getElementById('f-rstatus').value||null,quality:document.getElementById('f-quality').value||'ok',signature_name:document.getElementById('f-sign').value.trim()||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
+  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,equipment_no:document.getElementById('f-eqno').value.trim()||null,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,last_purchase:document.getElementById('f-date').value||null,received_by:document.getElementById('f-recvby').value.trim()||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,receiver_status:document.getElementById('f-rstatus').value||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
   const eid=document.getElementById('edit-id').value;
   let res;
   if(eid)res=await db(`/rest/v1/products?id=eq.${eid}`,'PATCH',obj,tok);
@@ -746,7 +746,7 @@ async function saveProduct(){
   setMsg('pmsg','✅ Product saved!','#4ade80');clearProd();await loadAll();
 }
 
-function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-supcon','f-date','f-recvby','f-receiver','f-sign','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('f-rstatus').value='';document.getElementById('f-quality').value='ok';document.getElementById('edit-id').value='';}
+function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-date','f-recvby','f-receiver','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('f-rstatus').value='';document.getElementById('edit-id').value='';}
 
 function renderProdTable(){
   const canEdit=['admin','user'].includes(S.profile?.role);
@@ -756,14 +756,13 @@ function renderProdTable(){
       <td style="color:${+p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
       <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td>
       <td>${p.last_purchase||'—'}</td><td>${p.received_by||'—'}</td><td>${p.receiver_id||'—'}</td><td>${badge(p)}</td>
-      <td><span style="color:${p.quality==='ok'?'#4ade80':p.quality==='damage'?'#fde68a':'#fca5a5'}">${(p.quality||'ok').toUpperCase()}</span></td>
-      <td>${p.signature_name||'—'}</td><td>${p.location||'—'}</td><td>${p.remark||'—'}</td>
+      <td>${p.location||'—'}</td><td>${p.remark||'—'}</td>
       <td>${canEdit?`<button class="btn bp bsm" onclick="editP('${p.id}')">✏️</button> <button class="btn bd bsm" onclick="delP('${p.id}')">🗑️</button>`:'—'}</td>
     </tr>`).join('')
     :'<tr><td colspan="16" style="text-align:center;color:#334155;padding:20px">No products found</td></tr>';
 }
 
-function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-supcon').value=p.supplier_contact||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-recvby').value=p.received_by||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-rstatus').value=p.receiver_status||'';document.getElementById('f-quality').value=p.quality||'ok';document.getElementById('f-sign').value=p.signature_name||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('products',null);window.scrollTo(0,0);}
+function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-recvby').value=p.received_by||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-rstatus').value=p.receiver_status||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('products',null);window.scrollTo(0,0);}
 
 async function delP(id){if(!confirm('Delete this product?'))return;await db(`/rest/v1/products?id=eq.${id}`,'DELETE',null,S.session?.access_token);await loadAll();}
 
