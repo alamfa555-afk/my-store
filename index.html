@@ -133,12 +133,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font)}
 .ir input{width:80px}
 .ir label{font-size:9px;color:var(--muted);white-space:nowrap}
 
-/* RECEIVING ROW */
-.recv-row{background:#080e1e;border:1px solid var(--bdr);border-radius:8px;padding:10px;margin-bottom:8px}
-.recv-row-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
-.recv-row-grid label{font-size:9px;color:#e2e8f0;font-weight:600;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:3px}
-.recv-row-grid input,.recv-row-grid select{background:#0a0f1e;border:1px solid var(--bdr);border-radius:6px;padding:6px 8px;color:#fff;font-size:11px;outline:none;width:100%}
-.recv-row-grid select option{background:#080e1e}
 
 /* TABLE */
 .tw{overflow-x:auto;border-radius:8px;border:1px solid var(--bdr);max-height:340px;overflow-y:auto}
@@ -243,7 +237,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     <nav class="sidebar">
       <div class="nsec">🛒 STORE</div>
       <button class="nitem active" onclick="showPanel('dashboard',this)"><span class="nico">📊</span> Dashboard</button>
-      <button class="nitem" onclick="showPanel('receiving',this)"><span class="nico">📥</span> Receiving</button>
+
       <button class="nitem" onclick="showPanel('products',this)"><span class="nico">📦</span> Product Entry</button>
       <button class="nitem" onclick="showPanel('issue',this)"><span class="nico">📤</span> Issue Items</button>
       <button class="nitem" onclick="showPanel('stock',this)"><span class="nico">🗃️</span> Stock View</button>
@@ -262,7 +256,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="ph">
     <div><h2>📊 Store Dashboard</h2><p>Real-time inventory overview</p></div>
     <div style="display:flex;gap:6px">
-      <button class="btn ba bsm" onclick="showPanel('receiving',null)">📥 Receiving</button>
+      <button class="btn ba bsm" onclick="showPanel('products',null)">📥 Product Entry</button>
       <button class="btn bp bsm" onclick="showPanel('issue',null)">📤 Issue</button>
     </div>
   </div>
@@ -280,80 +274,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   </div>
 </div>
 
-<!-- RECEIVING -->
-<div class="panel" id="panel-receiving">
-  <div class="ph"><div><h2>📥 Receiving</h2><p>Receive items from supplier — quality check & sign off</p></div></div>
-  <div class="card">
-    <div class="ct">◆ Supplier & Invoice Details</div>
-    <div class="fg">
-      <div class="fl">
-        <label>Invoice No *</label>
-        <input id="rv-inv" placeholder="e.g. INV-2024-001" oninput="acShow(this,'invoice_no','ac-rvinv')" onblur="acHide('ac-rvinv')" onfocus="acShow(this,'invoice_no','ac-rvinv')"/>
-        <div class="ac-list" id="ac-rvinv"></div>
-      </div>
-      <div class="fl">
-        <label>Supplier Name *</label>
-        <input id="rv-sup" placeholder="Supplier company name" oninput="acShow(this,'supplier_name','ac-rvsup');autoFillSupContact()" onblur="acHide('ac-rvsup')" onfocus="acShow(this,'supplier_name','ac-rvsup')"/>
-        <div class="ac-list" id="ac-rvsup"></div>
-      </div>
-      <div class="fl">
-        <label>Supplier Contact</label>
-        <input id="rv-scon" placeholder="Auto-fill or type contact no."/>
-      </div>
-      <div class="fl">
-        <label>Receiving Date *</label>
-        <input id="rv-date" type="date"/>
-      </div>
-      <div class="fl">
-        <label>Received By *</label>
-        <input id="rv-by" placeholder="Full name" oninput="acShow(this,'received_by','ac-rvby')" onblur="acHide('ac-rvby')" onfocus="acShow(this,'received_by','ac-rvby')"/>
-        <div class="ac-list" id="ac-rvby"></div>
-      </div>
-      <div class="fl">
-        <label>Receiver ID No.</label>
-        <input id="rv-rid" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-rvrid')" onblur="acHide('ac-rvrid')" onfocus="acShow(this,'receiver_id','ac-rvrid')"/>
-        <div class="ac-list" id="ac-rvrid"></div>
-      </div>
-      <div class="fl">
-        <label>Receiver Status</label>
-        <select id="rv-status"><option value="">-- Select Status --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select>
-      </div>
-      <div class="fl">
-        <label>Signature (Name)</label>
-        <input id="rv-sign" placeholder="Authorized signatory name" oninput="acShow(this,'signature_name','ac-rvsign')" onblur="acHide('ac-rvsign')" onfocus="acShow(this,'signature_name','ac-rvsign')"/>
-        <div class="ac-list" id="ac-rvsign"></div>
-      </div>
-      <div class="fl full">
-        <label>Remarks</label>
-        <input id="rv-rem" placeholder="Any additional notes"/>
-      </div>
-    </div>
-
-    <div class="ct" style="margin-top:4px">◆ Items Received</div>
-    <div id="recv-items-list"></div>
-    <div class="br">
-      <button class="btn bs bsm" onclick="addRecvRow()">+ Add Item Row</button>
-      <button class="btn ba" onclick="saveReceiving()">✓ Save & Update Stock</button>
-      <button class="btn bd" onclick="clearReceiving()">✕ Clear</button>
-    </div>
-    <div class="msg" id="rvmsg"></div>
-  </div>
-
-  <div class="card">
-    <div class="ct">◆ Receiving History</div>
-    <div class="br" style="margin-bottom:8px">
-      <button class="btn bg2 bsm" onclick="exportRecvCSV()">⬇ CSV</button>
-      <button class="btn bv bsm" onclick="makeRecvPDF()">⬇ PDF</button>
-    </div>
-    <div class="tw">
-      <table>
-        <thead><tr><th>#</th><th>Date</th><th>Supplier</th><th>Contact</th><th>Invoice</th><th>Description</th><th>Qty</th><th>Unit</th><th>Price/Unit</th><th>Total</th><th>Quality</th><th>Received By</th><th>ID No.</th><th>Status</th><th>Signature</th><th>Remark</th></tr></thead>
-        <tbody id="recv-tb"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
 <!-- PRODUCT ENTRY -->
 <div class="panel" id="panel-products">
   <div class="ph"><h2>📦 Product Entry</h2><p>Add or edit store products</p></div>
@@ -365,14 +285,18 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Invoice No</label><input id="f-invoice" placeholder="INV-2024-001" oninput="acShow(this,'invoice_no','ac-inv')" onblur="acHide('ac-inv')" onfocus="acShow(this,'invoice_no','ac-inv')"/><div class="ac-list" id="ac-inv"></div></div>
       <div class="fl"><label>Description *</label><input id="f-desc" placeholder="Product description" oninput="acShow(this,'description','ac-desc')" onblur="acHide('ac-desc')" onfocus="acShow(this,'description','ac-desc')"/><div class="ac-list" id="ac-desc"></div></div>
       <div class="fl"><label>Unit *</label><select id="f-unit"><option value="">-- Select --</option><option>Pcs</option><option>No.</option><option>Ltr</option><option>Mtr</option><option>Roll</option><option>Box</option><option>Sheet</option><option>Kg</option><option>Ton</option><option>Set</option><option>Other</option></select></div>
+      <div class="fl"><label>Quantity *</label><input id="f-qty" type="number" placeholder="0" min="0"/></div>
       <div class="fl"><label>Price/Unit (SAR)</label><input id="f-price" type="number" placeholder="0.00" min="0" step="0.01"/></div>
-      <div class="fl"><label>Quantity</label><input id="f-qty" type="number" placeholder="0" min="0"/></div>
       <div class="fl"><label>Equipment / Property No.</label><input id="f-eqno" placeholder="e.g. EQ-2024-001" oninput="acShow(this,'equipment_no','ac-eq')" onblur="acHide('ac-eq')" onfocus="acShow(this,'equipment_no','ac-eq')"/><div class="ac-list" id="ac-eq"></div></div>
-      <div class="fl"><label>Location</label><input id="f-loc" placeholder="Warehouse / Shelf" oninput="acShow(this,'location','ac-loc')" onblur="acHide('ac-loc')" onfocus="acShow(this,'location','ac-loc')"/><div class="ac-list" id="ac-loc"></div></div>
-      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
+      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
       <div class="fl"><label>Supplier Contact</label><input id="f-supcon" placeholder="+966 5xx xxx xxxx" oninput="acShow(this,'supplier_contact','ac-scon')" onblur="acHide('ac-scon')" onfocus="acShow(this,'supplier_contact','ac-scon')"/><div class="ac-list" id="ac-scon"></div></div>
-      <div class="fl"><label>Last Purchase Date</label><input id="f-date" type="date"/></div>
-      <div class="fl"><label>Receiver ID</label><input id="f-receiver" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
+      <div class="fl"><label>Receiving Date</label><input id="f-date" type="date"/></div>
+      <div class="fl"><label>Received By</label><input id="f-recvby" placeholder="Full name" oninput="acShow(this,'received_by','ac-recvby')" onblur="acHide('ac-recvby')" onfocus="acShow(this,'received_by','ac-recvby')"/><div class="ac-list" id="ac-recvby"></div></div>
+      <div class="fl"><label>Receiver ID No.</label><input id="f-receiver" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
+      <div class="fl"><label>Receiver Status</label><select id="f-rstatus"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
+      <div class="fl"><label>Quality Check</label><select id="f-quality"><option value="ok">✅ OK</option><option value="damage">⚠️ Damage</option><option value="reject">❌ Reject</option></select></div>
+      <div class="fl"><label>Signature (Name)</label><input id="f-sign" placeholder="Authorized signatory" oninput="acShow(this,'signature_name','ac-sign')" onblur="acHide('ac-sign')" onfocus="acShow(this,'signature_name','ac-sign')"/><div class="ac-list" id="ac-sign"></div></div>
+      <div class="fl"><label>Location</label><input id="f-loc" placeholder="Warehouse / Shelf" oninput="acShow(this,'location','ac-loc')" onblur="acHide('ac-loc')" onfocus="acShow(this,'location','ac-loc')"/><div class="ac-list" id="ac-loc"></div></div>
       <div class="fl"><label>Status</label><select id="f-status"><option value="ok">OK</option><option value="damage">Damage</option><option value="reject">Reject</option><option value="expiry">Expiry</option></select></div>
       <div class="fl"><label>Remark</label><input id="f-rem" placeholder="Any remarks"/></div>
     </div>
@@ -385,7 +309,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="card">
     <div class="ct">◆ All Products</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Price</th><th>Qty</th><th>Location</th><th>Supplier</th><th>Contact</th><th>Receiver</th><th>Date</th><th>Status</th><th>Remark</th><th>Action</th></tr></thead>
+      <thead><tr><th>#</th><th>Code</th><th>Eq.No</th><th>Invoice</th><th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Contact</th><th>Date</th><th>Received By</th><th>Rcvr ID</th><th>Status</th><th>Quality</th><th>Signature</th><th>Location</th><th>Remark</th><th>Action</th></tr></thead>
       <tbody id="prod-tb"></tbody>
     </table></div>
   </div>
@@ -486,13 +410,13 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <button class="btn bv" onclick="makePDF('allissue')">📄 All Issues</button>
       <button class="btn bv" onclick="makePDF('lowstock')">📄 Low Stock</button>
       <button class="btn bv" onclick="makePDF('balance')">📄 Balance Sheet</button>
-      <button class="btn bv" onclick="makeRecvPDF()">📄 Receiving Report</button>
+
     </div>
     <div class="ct" style="margin-top:12px">◆ CSV Reports</div>
     <div class="br" style="flex-wrap:wrap">
       <button class="btn bg2" onclick="exportStockCSV()">⬇ Stock CSV</button>
       <button class="btn bg2" onclick="exportIssueCSV()">⬇ Issue CSV</button>
-      <button class="btn bg2" onclick="exportRecvCSV()">⬇ Receiving CSV</button>
+
       <button class="btn bg2" onclick="exportBalanceCSV()">⬇ Balance CSV</button>
     </div>
     <div class="ct" style="margin-top:12px">◆ Product-wise PDF</div>
@@ -633,7 +557,7 @@ async function loadAll(){
   const [pr,iss,rv,ac]=await Promise.all([
     db('/rest/v1/products?select=*&order=created_at.desc','GET',null,tok),
     db('/rest/v1/issue_items?select=*,issues(*),products(*)&order=created_at.desc','GET',null,tok),
-    db('/rest/v1/receivings?select=*&order=created_at.desc','GET',null,tok),
+    Promise.resolve({ok:true,data:[]}),
     db('/rest/v1/autocomplete_data?select=*','GET',null,tok)
   ]);
   if(pr.ok&&pr.data)S.prods=pr.data;
@@ -690,7 +614,7 @@ function renderDash(){
   const low=S.prods.filter(p=>+p.quantity>0&&+p.quantity<=10).length;
   const noStock=S.prods.filter(p=>+p.quantity<=0).length;
   const totalVal=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
-  const recvVal=S.recvs.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity),0);
+  const recvVal=totalVal+S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
   document.getElementById('dash-stats').innerHTML=`
     <div class="sc"><div class="sico">📦</div><div class="sv">${total}</div><div class="sl">Total Products</div></div>
     <div class="sc yel"><div class="sico">⚠️</div><div class="sv" style="color:#fde68a">${low}</div><div class="sl">Low Stock</div></div>
@@ -700,7 +624,7 @@ function renderDash(){
   // Balance on dashboard
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const currentStock=S.prods.reduce((s,p)=>s+(+p.quantity),0);
-  const totalIn=S.recvs.reduce((s,r)=>s+(+r.quantity),0);
+  const totalIn=S.prods.reduce((s,p)=>s+(+p.quantity),0)+S.issues.reduce((s,i)=>s+(+i.quantity),0);
   document.getElementById('dash-balance').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received (IN)</div><div class="bv2" style="color:#4ade80">${totalIn}</div><div class="bl">Units</div></div>
     <div class="bal-card out"><div class="bl">Total Issued (OUT)</div><div class="bv2" style="color:#fca5a5">${totalOut}</div><div class="bl">Units</div></div>
@@ -812,31 +736,34 @@ async function saveProduct(){
   const code=document.getElementById('f-code').value.trim(),desc=document.getElementById('f-desc').value.trim(),unit=document.getElementById('f-unit').value;
   if(!code||!desc||!unit){setMsg('pmsg','Item Code, Description and Unit are required!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,equipment_no:document.getElementById('f-eqno').value.trim()||null,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,supplier_contact:document.getElementById('f-supcon').value.trim()||null,last_purchase:document.getElementById('f-date').value||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
+  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,equipment_no:document.getElementById('f-eqno').value.trim()||null,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,supplier_contact:document.getElementById('f-supcon').value.trim()||null,last_purchase:document.getElementById('f-date').value||null,received_by:document.getElementById('f-recvby').value.trim()||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,receiver_status:document.getElementById('f-rstatus').value||null,quality:document.getElementById('f-quality').value||'ok',signature_name:document.getElementById('f-sign').value.trim()||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
   const eid=document.getElementById('edit-id').value;
   let res;
   if(eid)res=await db(`/rest/v1/products?id=eq.${eid}`,'PATCH',obj,tok);
   else{const ex=S.prods.find(p=>p.item_code===code);if(ex)res=await db(`/rest/v1/products?id=eq.${ex.id}`,'PATCH',obj,tok);else res=await db('/rest/v1/products','POST',obj,tok);}
   if(!res.ok){setMsg('pmsg','Error saving product','#fca5a5');return;}
-  await Promise.all([saveAC('item_code',code),saveAC('description',desc),saveAC('invoice_no',obj.invoice_no),saveAC('equipment_no',obj.equipment_no),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('supplier_contact',obj.supplier_contact),saveAC('receiver_id',obj.receiver_id)]);
+  await Promise.all([saveAC('item_code',code),saveAC('description',desc),saveAC('invoice_no',obj.invoice_no),saveAC('equipment_no',obj.equipment_no),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('supplier_contact',obj.supplier_contact),saveAC('receiver_id',obj.receiver_id),saveAC('received_by',obj.received_by),saveAC('signature_name',obj.signature_name)]);
   setMsg('pmsg','✅ Product saved!','#4ade80');clearProd();await loadAll();
 }
 
-function clearProd(){['f-code','f-invoice','f-desc','f-price','f-qty','f-eqno','f-loc','f-sup','f-supcon','f-date','f-receiver','f-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('edit-id').value='';}
+function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-supcon','f-date','f-recvby','f-receiver','f-sign','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('f-rstatus').value='';document.getElementById('f-quality').value='ok';document.getElementById('edit-id').value='';}
 
 function renderProdTable(){
   const canEdit=['admin','user'].includes(S.profile?.role);
   document.getElementById('prod-tb').innerHTML=S.prods.length
     ?S.prods.map((p,i)=>`<tr>
       <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.equipment_no||'—'}</td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
-      <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td style="color:${+p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
-      <td>${p.location||'—'}</td><td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td><td>${p.receiver_id||'—'}</td><td>${p.last_purchase||'—'}</td><td>${badge(p)}</td><td>${p.remark||'—'}</td>
+      <td style="color:${+p.quantity<=10?'#fde68a':'#4ade80'};font-weight:700">${p.quantity}</td>
+      <td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>${p.supplier_name||'—'}</td><td>${p.supplier_contact||'—'}</td>
+      <td>${p.last_purchase||'—'}</td><td>${p.received_by||'—'}</td><td>${p.receiver_id||'—'}</td><td>${badge(p)}</td>
+      <td><span style="color:${p.quality==='ok'?'#4ade80':p.quality==='damage'?'#fde68a':'#fca5a5'}">${(p.quality||'ok').toUpperCase()}</span></td>
+      <td>${p.signature_name||'—'}</td><td>${p.location||'—'}</td><td>${p.remark||'—'}</td>
       <td>${canEdit?`<button class="btn bp bsm" onclick="editP('${p.id}')">✏️</button> <button class="btn bd bsm" onclick="delP('${p.id}')">🗑️</button>`:'—'}</td>
     </tr>`).join('')
     :'<tr><td colspan="16" style="text-align:center;color:#334155;padding:20px">No products found</td></tr>';
 }
 
-function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-supcon').value=p.supplier_contact||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('products',null);window.scrollTo(0,0);}
+function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-supcon').value=p.supplier_contact||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-recvby').value=p.received_by||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-rstatus').value=p.receiver_status||'';document.getElementById('f-quality').value=p.quality||'ok';document.getElementById('f-sign').value=p.signature_name||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('products',null);window.scrollTo(0,0);}
 
 async function delP(id){if(!confirm('Delete this product?'))return;await db(`/rest/v1/products?id=eq.${id}`,'DELETE',null,S.session?.access_token);await loadAll();}
 
@@ -922,10 +849,10 @@ function renderBalance(){
   // IN = total from receivings table (what was received from suppliers)
   // OUT = total from issue_items (what was issued)
   // CURRENT = actual qty in products table
-  const totalIn=S.recvs.reduce((s,r)=>s+(+r.quantity),0);
+  const totalIn=S.prods.reduce((s,p)=>s+(+p.quantity),0)+S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const currentStock=S.prods.reduce((s,p)=>s+(+p.quantity),0);
-  const valIn=S.recvs.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity),0);
+  const valIn=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*((+p.quantity)+S.issues.filter(x=>(x.product_id===p.id||x.products?.id===p.id)).reduce((a,x)=>a+(+x.quantity),0)),0);
   const valOut=S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
   const currentVal=S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
 
@@ -934,11 +861,7 @@ function renderBalance(){
     <div class="bal-card out"><div class="bl">Total Issued (OUT)</div><div class="bv2" style="color:#fca5a5">${totalOut} units</div><div class="bl">SAR ${valOut.toFixed(2)}</div></div>
     <div class="bal-card bal"><div class="bl">Current Balance</div><div class="bv2" style="color:#fde68a">${currentStock} units</div><div class="bl">SAR ${currentVal.toFixed(2)}</div></div>`;
 
-  document.getElementById('bs-in-tb').innerHTML=S.recvs.slice(0,30).map((r,i)=>`<tr>
-    <td>${i+1}</td><td>${r.receiving_date||'—'}</td><td>—</td><td>${r.description||'—'}</td>
-    <td style="color:#4ade80;font-weight:700">+${r.quantity}</td><td>SAR ${(+r.price_per_unit).toFixed(2)}</td>
-    <td>SAR ${((+r.price_per_unit)*(+r.quantity)).toFixed(2)}</td><td>${r.supplier_name||'—'}</td>
-  </tr>`).join('');
+  document.getElementById('bs-in-tb').innerHTML=S.prods.slice(0,30).map((p,i)=>{const issuedQty=S.issues.filter(x=>x.product_id===p.id||x.products?.id===p.id).reduce((a,x)=>a+(+x.quantity),0);const origQty=(+p.quantity)+issuedQty;return`<tr><td>${i+1}</td><td>${p.last_purchase||'—'}</td><td>${p.item_code||'—'}</td><td>${p.description||'—'}</td><td style="color:#4ade80;font-weight:700">+${origQty}</td><td>SAR ${(+p.price_per_unit).toFixed(2)}</td><td>SAR ${((+p.price_per_unit)*origQty).toFixed(2)}</td><td>${p.supplier_name||'—'}</td></tr>`;}).join('');
 
   document.getElementById('bs-out-tb').innerHTML=S.issues.slice(0,30).map((i,n)=>`<tr>
     <td>${n+1}</td><td>${i.issues?.issue_date||'—'}</td><td>${i.products?.item_code||'—'}</td><td>${i.products?.description||'—'}</td>
@@ -971,7 +894,7 @@ function exportIssueCSV(){csvDL(S.issues.map(i=>({'Date':i.issues?.issue_date||'
 function exportRecvCSV(){csvDL(S.recvs.map(r=>({'Date':r.receiving_date||'','Supplier':r.supplier_name||'','Contact':r.supplier_contact||'','Invoice':r.invoice_no||'','Description':r.description||'','Qty':r.quantity,'Unit':r.unit||'','Price':r.price_per_unit,'Total':((+r.price_per_unit)*(+r.quantity)).toFixed(2),'Quality':r.quality||'','Received By':r.received_by||'','Signature':r.signature_name||'','Remark':r.remark||''})),'Ajanta_Receiving');}
 
 function exportBalanceCSV(){
-  const totalIn=S.recvs.reduce((s,r)=>s+(+r.quantity),0);
+  const totalIn=S.prods.reduce((s,p)=>s+(+p.quantity),0)+S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const totalOut=S.issues.reduce((s,i)=>s+(+i.quantity),0);
   const currentStock=S.prods.reduce((s,p)=>s+(+p.quantity),0);
   csvDL([{'Type':'Total Received IN','Qty':totalIn,'Value SAR':S.recvs.reduce((s,r)=>s+(+r.price_per_unit)*(+r.quantity),0).toFixed(2)},{'Type':'Total Issued OUT','Qty':totalOut,'Value SAR':S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0).toFixed(2)},{'Type':'Current Balance','Qty':currentStock,'Value SAR':S.prods.reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0).toFixed(2)}],'Ajanta_Balance');
