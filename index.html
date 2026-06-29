@@ -296,9 +296,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Equipment / Property No.</label><input id="f-eqno" placeholder="e.g. EQ-2024-001" oninput="acShow(this,'equipment_no','ac-eq')" onblur="acHide('ac-eq')" onfocus="acShow(this,'equipment_no','ac-eq')"/><div class="ac-list" id="ac-eq"></div></div>
       <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')" onclick="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
 
-      <div class="fl"><label>Received By</label><input id="f-recvby" placeholder="Full name" oninput="acShow(this,'received_by','ac-recvby');autoFillReceiverID()" onblur="acHide('ac-recvby')" onfocus="acShow(this,'received_by','ac-recvby');acShow(this,'received_by','ac-recvby')"/><div class="ac-list" id="ac-recvby"></div></div>
+      <div class="fl"><label>Received By</label><input id="f-recvby" placeholder="Full name" oninput="acShow(this,'received_by','ac-recvby');autoFillReceiverID()" onblur="acHide('ac-recvby')" onfocus="acShow(this,'received_by','ac-recvby')" onclick="acShow(this,'received_by','ac-recvby')"/><div class="ac-list" id="ac-recvby"></div></div>
       <div class="fl"><label>Receiver ID No.</label><input id="f-receiver" placeholder="Auto-fill or type ID" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')" onclick="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
-      <div class="fl"><label>Receiving Date</label><input id="f-date" type="date"/></div>
+      <div class="fl"><label>Receiving Date</label><input id="f-date" type="date" value=""/></div>
       <div class="fl"><label>Receiver Status</label><select id="f-rstatus"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
 
 
@@ -618,7 +618,7 @@ async function initApp(){
   await loadAll();
   await loadSuppliers();
   document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
-  const fd=document.getElementById('f-date');if(fd&&!fd.value)fd.value=new Date().toISOString().split('T')[0];
+  setTimeout(()=>{const fd=document.getElementById('f-date');if(fd)fd.value=new Date().toISOString().split('T')[0];},300);
   const rvd=document.getElementById('rv-date');if(rvd)rvd.value=new Date().toISOString().split('T')[0];
   addIRow();
   if(document.getElementById('recv-items-list'))addRecvRow();
@@ -831,7 +831,8 @@ async function saveProduct(){
   setMsg('pmsg','✅ Product saved!','#4ade80');clearProd();await loadAll();
 }
 
-function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-date','f-recvby','f-receiver','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('f-rstatus').value='';document.getElementById('edit-id').value='';}
+function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-recvby','f-receiver','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');
+  const fd=document.getElementById('f-date');if(fd)fd.value=new Date().toISOString().split('T')[0];document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('f-rstatus').value='';document.getElementById('edit-id').value='';}
 
 function renderProdTable(){
   const canEdit=['admin','user'].includes(S.profile?.role);
@@ -1077,6 +1078,7 @@ function showPanel(name,el){
   document.getElementById('panel-'+name)?.classList.add('active');
   if(el)el.classList.add('active');
   if(name==='balance')renderBalance();
+  if(name==='products'){const fd=document.getElementById('f-date');if(fd&&!fd.value)fd.value=new Date().toISOString().split('T')[0];}
   if(name==='charts')setTimeout(renderCharts,100);
   if(name==='suppliers')renderSupTable();
   if(name==='admin')loadUsers();
