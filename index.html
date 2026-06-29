@@ -644,7 +644,36 @@ async function loadAll(){
       if(!S.acData[r.field].includes(r.value))S.acData[r.field].push(r.value);
     });
   }
+  // Build acData from actual product entries (always up to date)
+  buildAcDataFromProds();
   renderDash();renderProdTable();renderIssueTable();renderStock('all');renderBalance();fillSelects();renderNotifs();
+}
+
+function buildAcDataFromProds(){
+  // Always rebuild from actual data so all entries show in dropdown
+  const fields = {
+    item_code: S.prods.map(p=>p.item_code),
+    description: S.prods.map(p=>p.description),
+    invoice_no: S.prods.map(p=>p.invoice_no),
+    equipment_no: S.prods.map(p=>p.equipment_no),
+    supplier_name: S.prods.map(p=>p.supplier_name),
+    location: S.prods.map(p=>p.location),
+    received_by: S.prods.map(p=>p.received_by),
+    receiver_id: S.prods.map(p=>p.receiver_id),
+    receiver_status: S.prods.map(p=>p.receiver_status),
+    issued_to: S.issues.map(i=>i.issues?.issued_to),
+    issued_by: S.issues.map(i=>i.issues?.issued_by),
+    person_id: S.issues.map(i=>i.issues?.person_id),
+    mdr_no: S.issues.map(i=>i.issues?.mdr_no),
+    receiver_contact: S.issues.map(i=>i.issues?.receiver_contact),
+  };
+  Object.entries(fields).forEach(([field, values])=>{
+    if(!S.acData[field]) S.acData[field]=[];
+    values.forEach(v=>{
+      if(v && v.trim() && !S.acData[field].includes(v.trim()))
+        S.acData[field].push(v.trim());
+    });
+  });
 }
 
 async function saveAC(field,value){
@@ -828,7 +857,7 @@ async function saveProduct(){
   else{const ex=S.prods.find(p=>p.item_code===code);if(ex)res=await db(`/rest/v1/products?id=eq.${ex.id}`,'PATCH',obj,tok);else res=await db('/rest/v1/products','POST',obj,tok);}
   if(!res.ok){setMsg('pmsg','Error saving product','#fca5a5');return;}
   await Promise.all([saveAC('item_code',code),saveAC('description',desc),saveAC('invoice_no',obj.invoice_no),saveAC('equipment_no',obj.equipment_no),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('receiver_id',obj.receiver_id),saveAC('received_by',obj.received_by),saveAC('received_by',obj.received_by)]);
-  setMsg('pmsg','✅ Product saved!','#4ade80');clearProd();await loadAll();
+  setMsg('pmsg','✅ Product saved!','#4ade80');clearProd();await loadAll();buildAcDataFromProds();
 }
 
 function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-recvby','f-receiver','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');
@@ -891,7 +920,7 @@ async function saveIssue(){
     await db(`/rest/v1/products?id=eq.${it.pid}`,'PATCH',{quantity:Math.max(0,freshQty-it.qty)},tok);
   }
   await Promise.all([saveAC('mdr_no',document.getElementById('i-mdr').value.trim()),saveAC('issued_to',to),saveAC('issued_by',by),saveAC('person_id',document.getElementById('i-pid').value.trim()),saveAC('receiver_contact',document.getElementById('i-rcon').value.trim()),saveAC('receiver_id',document.getElementById('i-rid').value.trim()),saveAC('issued_by_title',title)]);
-  setMsg('imsg','✅ Items issued! Stock updated.','#4ade80');clearIssue();await loadAll();
+  setMsg('imsg','✅ Items issued! Stock updated.','#4ade80');clearIssue();await loadAll();buildAcDataFromProds();
 }
 
 function clearIssue(){['i-mdr','i-to','i-by','i-pid','i-rcon','i-rid','i-rem'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-title').value='';document.getElementById('i-date').value=new Date().toISOString().split('T')[0];document.getElementById('ilist').innerHTML='';addIRow();}
