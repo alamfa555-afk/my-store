@@ -243,6 +243,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <button class="nitem" onclick="showPanel('stock',this)"><span class="nico">🗃️</span> Stock View</button>
       <button class="nitem" onclick="showPanel('balance',this)"><span class="nico">⚖️</span> Balance Sheet</button>
       <button class="nitem" onclick="showPanel('reports',this)"><span class="nico">📋</span> Reports</button>
+      <button class="nitem" onclick="showPanel('suppliers',this)"><span class="nico">🏭</span> Suppliers</button>
+      <button class="nitem" onclick="showPanel('charts',this)"><span class="nico">📈</span> Charts</button>
       <button class="nitem" onclick="showPanel('notifications',this)"><span class="nico">🔔</span> Notifications</button>
       <div class="divider"></div>
       <div class="nsec admin" id="admin-sec">⚙️ ADMIN</div>
@@ -428,6 +430,44 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   </div>
 </div>
 
+<!-- SUPPLIERS -->
+<div class="panel" id="panel-suppliers">
+  <div class="ph"><div><h2>🏭 Supplier Database</h2><p>All suppliers contact list</p></div>
+    <button class="btn ba bsm" onclick="openSupModal()">+ Add Supplier</button>
+  </div>
+  <div class="card">
+    <div class="ct">◆ Search Suppliers</div>
+    <input type="search" id="sup-search" placeholder="Search by name or contact..." oninput="renderSupTable()" style="width:100%;background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;color:#fff;font-size:12px;outline:none;margin-bottom:12px"/>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Company Name</th><th>Contact Person</th><th>Phone</th><th>Email</th><th>Address</th><th>Category</th><th>Remark</th><th>Action</th></tr></thead>
+      <tbody id="sup-tb"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<div class="panel" id="panel-charts">
+  <div class="ph"><h2>📈 Charts & Analytics</h2><p>Stock overview — quantities and values</p></div>
+  <div class="bg3" id="chart-summary"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card" style="margin:0">
+      <div class="ct">◆ Stock Overview (Bar Chart)</div>
+      <div style="height:260px"><canvas id="chart-bar"></canvas></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="ct">◆ Distribution (Pie Chart)</div>
+      <div style="height:260px"><canvas id="chart-pie"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">◆ Top Products by Value</div>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Item Code</th><th>Description</th><th>Qty</th><th>Price</th><th>Total Value</th><th>Status</th></tr></thead>
+      <tbody id="chart-prod-tb"></tbody>
+    </table></div>
+  </div>
+</div>
+
 <!-- NOTIFICATIONS -->
 <div class="panel" id="panel-notifications">
   <div class="ph"><h2>🔔 Notifications</h2><p>Stock alerts</p></div>
@@ -459,6 +499,27 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   </div>
 </div>
 
+<!-- SUPPLIER MODAL -->
+<div class="modal-ov" id="sup-modal">
+  <div class="modal-box">
+    <h3 id="sup-modal-title" style="font-size:15px;font-weight:800;margin-bottom:16px;color:#fff">Add Supplier</h3>
+    <div class="fg">
+      <div class="fl full"><label>Company Name *</label><input id="sm-name" placeholder="Supplier company name"/></div>
+      <div class="fl"><label>Contact Person</label><input id="sm-person" placeholder="Person name"/></div>
+      <div class="fl"><label>Phone *</label><input id="sm-phone" placeholder="+966 5xx xxx xxxx"/></div>
+      <div class="fl"><label>Email</label><input id="sm-email" placeholder="email@company.com"/></div>
+      <div class="fl"><label>Category</label><select id="sm-cat"><option value="">-- Select --</option><option>Electronics</option><option>Construction</option><option>Tools & Equipment</option><option>Plumbing</option><option>Electrical</option><option>Chemicals</option><option>Hardware</option><option>Other</option></select></div>
+      <div class="fl"><label>Address</label><input id="sm-addr" placeholder="City / Address"/></div>
+      <div class="fl full"><label>Remark</label><input id="sm-rem" placeholder="Any notes"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn bd" onclick="closeSupModal()">Cancel</button>
+      <button class="btn ba" onclick="saveSupplier()">Save Supplier</button>
+    </div>
+    <div class="msg" id="sup-msg"></div>
+  </div>
+</div>
+
 <script>
 const SURL='https://uxhtffhfudynqbazfzjg.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4aHRmZmhmdWR5bnFiYXpmempnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5OTEyMjksImV4cCI6MjA5NzU2NzIyOX0.Cz7yXki5C6i8UyHgt6pH0wjp6t-IJ_MbPkAr6tnp6mg';
@@ -476,7 +537,7 @@ const authReq=async(path,body)=>{
   return{ok:r.ok,data:await r.json()};
 };
 
-let S={session:null,profile:null,prods:[],issues:[],recvs:[],acData:{}};
+let S={session:null,profile:null,prods:[],issues:[],recvs:[],suppliers:[],acData:{}};
 
 // ═══ AUTH ═══
 function switchTab(t,el){
@@ -545,6 +606,7 @@ async function initApp(){
   document.getElementById('admin-sec').style.display=isAdmin?'block':'none';
   document.getElementById('admin-btn').style.display=isAdmin?'flex':'none';
   await loadAll();
+  await loadSuppliers();
   document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];
   addIRow();addRecvRow();
@@ -982,6 +1044,8 @@ function showPanel(name,el){
   document.getElementById('panel-'+name)?.classList.add('active');
   if(el)el.classList.add('active');
   if(name==='balance')renderBalance();
+  if(name==='charts')setTimeout(renderCharts,100);
+  if(name==='suppliers')renderSupTable();
   if(name==='admin')loadUsers();
   if(name==='stock')renderStock('all');
 }
@@ -1070,6 +1134,161 @@ function togglePID(){
   const inp=document.getElementById('i-pid');
   inp.placeholder=type==='employee'?'Employee No. e.g. EMP-001':'Site No. e.g. SITE-A';
 }
+// ═══ SUPPLIERS ═══
+let supEditId = null;
+
+async function loadSuppliers(){
+  const r = await db('/rest/v1/suppliers?select=*&order=name', 'GET', null, S.session?.access_token);
+  if(r.ok && r.data) S.suppliers = r.data;
+  renderSupTable();
+  // Populate supplier autocomplete
+  if(S.suppliers){
+    S.acData['supplier_name'] = S.suppliers.map(s=>s.name).filter(Boolean);
+  }
+}
+
+function renderSupTable(){
+  const search = document.getElementById('sup-search')?.value.toLowerCase()||'';
+  const data = (S.suppliers||[]).filter(s=>
+    !search || s.name?.toLowerCase().includes(search) || s.phone?.toLowerCase().includes(search) || s.contact_person?.toLowerCase().includes(search)
+  );
+  const canEdit = ['admin','user'].includes(S.profile?.role);
+  document.getElementById('sup-tb').innerHTML = data.length
+    ? data.map((s,i)=>`<tr>
+        <td>${i+1}</td><td><b>${s.name||'—'}</b></td><td>${s.contact_person||'—'}</td>
+        <td style="color:#4ade80">${s.phone||'—'}</td><td>${s.email||'—'}</td>
+        <td>${s.address||'—'}</td><td>${s.category||'—'}</td><td>${s.remark||'—'}</td>
+        <td>${canEdit?`<button class="btn bp bsm" onclick="editSup('${s.id}')">✏️</button> <button class="btn bd bsm" onclick="delSup('${s.id}')">🗑️</button>`:'—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">No suppliers found</td></tr>';
+}
+
+function openSupModal(){
+  supEditId=null;
+  document.getElementById('sup-modal-title').textContent='Add Supplier';
+  ['sm-name','sm-person','sm-phone','sm-email','sm-addr','sm-rem'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sm-cat').value='';
+  document.getElementById('sup-modal').classList.add('open');
+}
+
+function closeSupModal(){ document.getElementById('sup-modal').classList.remove('open'); supEditId=null; }
+document.getElementById('sup-modal').addEventListener('click',e=>{if(e.target===document.getElementById('sup-modal'))closeSupModal();});
+
+function editSup(id){
+  const s=(S.suppliers||[]).find(x=>x.id===id);if(!s)return;
+  supEditId=id;
+  document.getElementById('sup-modal-title').textContent='Edit Supplier';
+  document.getElementById('sm-name').value=s.name||'';
+  document.getElementById('sm-person').value=s.contact_person||'';
+  document.getElementById('sm-phone').value=s.phone||'';
+  document.getElementById('sm-email').value=s.email||'';
+  document.getElementById('sm-cat').value=s.category||'';
+  document.getElementById('sm-addr').value=s.address||'';
+  document.getElementById('sm-rem').value=s.remark||'';
+  document.getElementById('sup-modal').classList.add('open');
+}
+
+async function saveSupplier(){
+  const name=document.getElementById('sm-name').value.trim();
+  const phone=document.getElementById('sm-phone').value.trim();
+  if(!name){setMsg('sup-msg','Company name is required!','#fca5a5');return;}
+  const tok=S.session?.access_token;
+  const obj={name,contact_person:document.getElementById('sm-person').value.trim()||null,phone:phone||null,email:document.getElementById('sm-email').value.trim()||null,category:document.getElementById('sm-cat').value||null,address:document.getElementById('sm-addr').value.trim()||null,remark:document.getElementById('sm-rem').value.trim()||null};
+  let res;
+  if(supEditId) res=await db(`/rest/v1/suppliers?id=eq.${supEditId}`,'PATCH',obj,tok);
+  else res=await db('/rest/v1/suppliers','POST',obj,tok);
+  if(!res.ok){setMsg('sup-msg','Error saving supplier','#fca5a5');return;}
+  closeSupModal();await loadSuppliers();
+}
+
+async function delSup(id){
+  if(!confirm('Delete this supplier?'))return;
+  await db(`/rest/v1/suppliers?id=eq.${id}`,'DELETE',null,S.session?.access_token);
+  await loadSuppliers();
+}
+
+// ═══ CHARTS ═══
+let chartInstances = {};
+
+function destroyChart(id){ if(chartInstances[id]){chartInstances[id].destroy();delete chartInstances[id];} }
+
+function renderCharts(){
+  // Calculate data
+  const totalRecvQty = S.prods.reduce((s,p)=>s+(+p.quantity),0) + S.issues.reduce((s,i)=>s+(+i.quantity),0);
+  const totalRecvVal = S.prods.reduce((s,p)=>s+(+p.price_per_unit)*((+p.quantity)+S.issues.filter(x=>x.product_id===p.id||x.products?.id===p.id).reduce((a,x)=>a+(+x.quantity),0)),0);
+  const totalIssueQty = S.issues.reduce((s,i)=>s+(+i.quantity),0);
+  const totalIssueVal = S.issues.reduce((s,i)=>s+(+(i.products?.price_per_unit||0))*(+i.quantity),0);
+  const totalDmgQty = S.prods.filter(p=>p.status==='damage'||p.status==='reject').reduce((s,p)=>s+(+p.quantity),0);
+  const totalDmgVal = S.prods.filter(p=>p.status==='damage'||p.status==='reject').reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
+  const currentQty = S.prods.filter(p=>p.status==='ok').reduce((s,p)=>s+(+p.quantity),0);
+  const currentVal = S.prods.filter(p=>p.status==='ok').reduce((s,p)=>s+(+p.price_per_unit)*(+p.quantity),0);
+
+  // Summary cards
+  document.getElementById('chart-summary').innerHTML=`
+    <div class="bal-card in"><div class="bl">Total Received</div><div class="bv2" style="color:#4ade80;font-size:20px">${totalRecvQty} Units</div><div class="bl">SAR ${totalRecvVal.toFixed(2)}</div></div>
+    <div class="bal-card out"><div class="bl">Total Issued</div><div class="bv2" style="color:#fca5a5;font-size:20px">${totalIssueQty} Units</div><div class="bl">SAR ${totalIssueVal.toFixed(2)}</div></div>
+    <div class="bal-card bal"><div class="bl">Damage / Reject</div><div class="bv2" style="color:#fde68a;font-size:20px">${totalDmgQty} Units</div><div class="bl">SAR ${totalDmgVal.toFixed(2)}</div></div>`;
+
+  // BAR CHART - Qty comparison
+  destroyChart('chart-bar');
+  const barCtx = document.getElementById('chart-bar');
+  if(barCtx){
+    chartInstances['chart-bar'] = new Chart(barCtx,{
+      type:'bar',
+      data:{
+        labels:['Received','In Stock','Issued','Damage/Reject'],
+        datasets:[
+          {label:'Quantity',data:[totalRecvQty,currentQty,totalIssueQty,totalDmgQty],backgroundColor:['#22c55e','#3b82f6','#f97316','#ef4444'],borderRadius:6,yAxisID:'y'},
+          {label:'Value (SAR)',data:[totalRecvVal,currentVal,totalIssueVal,totalDmgVal],backgroundColor:['#166534','#1e3a8a','#9a3412','#7f1d1d'],borderRadius:6,yAxisID:'y1'}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#e2e8f0',font:{size:11}}}},
+        scales:{
+          y:{position:'left',ticks:{color:'#64748b',font:{size:9}},grid:{color:'#1e3a8a'},title:{display:true,text:'Quantity',color:'#94a3b8',font:{size:9}}},
+          y1:{position:'right',ticks:{color:'#64748b',font:{size:9}},grid:{drawOnChartArea:false},title:{display:true,text:'Value (SAR)',color:'#94a3b8',font:{size:9}}},
+          x:{ticks:{color:'#e2e8f0',font:{size:10}},grid:{color:'#1e3a8a'}}
+        }
+      }
+    });
+  }
+
+  // PIE CHART - Distribution
+  destroyChart('chart-pie');
+  const pieCtx = document.getElementById('chart-pie');
+  if(pieCtx){
+    chartInstances['chart-pie'] = new Chart(pieCtx,{
+      type:'doughnut',
+      data:{
+        labels:['In Stock','Issued','Damage/Reject'],
+        datasets:[{
+          data:[currentQty,totalIssueQty,totalDmgQty],
+          backgroundColor:['#3b82f6','#f97316','#ef4444'],
+          borderColor:'#0a0f1e',borderWidth:3
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{labels:{color:'#e2e8f0',font:{size:11}}},
+          tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} units`}}
+        }
+      }
+    });
+  }
+
+  // Top products table
+  const topProds = [...S.prods].sort((a,b)=>((+b.price_per_unit)*(+b.quantity))-((+a.price_per_unit)*(+a.quantity))).slice(0,10);
+  document.getElementById('chart-prod-tb').innerHTML = topProds.map((p,i)=>`<tr>
+    <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.description}</td>
+    <td style="color:#4ade80;font-weight:700">${p.quantity}</td>
+    <td>SAR ${(+p.price_per_unit).toFixed(2)}</td>
+    <td style="color:#fde68a;font-weight:700">SAR ${((+p.price_per_unit)*(+p.quantity)).toFixed(2)}</td>
+    <td>${badge(p)}</td>
+  </tr>`).join('');
+}
+
 function setMsg(id,msg,color){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=color;setTimeout(()=>{if(el)el.textContent='';},5000);}}
 </script>
 </body>
