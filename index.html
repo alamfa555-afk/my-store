@@ -427,7 +427,13 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     </div>
     <div class="ct" style="margin-top:12px">◆ Product-wise PDF</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="rpt-pid" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 10px;color:#fff;font-size:12px;outline:none;flex:1;min-width:200px"><option value="">-- Select Product --</option></select>
+      <div style="flex:1;min-width:200px;position:relative">
+        <input id="rpt-search" placeholder="Type Item Code or Description..." 
+          style="width:100%;background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 10px;color:#fff;font-size:12px;outline:none"
+          oninput="rptSearchShow()" onblur="setTimeout(()=>document.getElementById('rpt-ac').style.display='none',200)"/>
+        <div id="rpt-ac" style="display:none;position:absolute;top:100%;left:0;right:0;background:#0d1b3e;border:1px solid var(--blue);border-radius:0 0 7px 7px;z-index:300;max-height:200px;overflow-y:auto"></div>
+      </div>
+      <div id="rpt-selected" style="padding:7px 12px;background:#080e1e;border:1px solid var(--bdr);border-radius:6px;font-size:12px;color:#fde68a;min-width:150px">No item selected</div>
       <button class="btn bv" onclick="makeProdPDF()">📄 Generate</button>
     </div>
     <div class="msg" id="rpt-msg"></div>
@@ -803,7 +809,7 @@ function clearReceiving(){
 function fillSelects(){
   const opts='<option value="">-- Select Product --</option>'+S.prods.map(p=>`<option value="${p.id}">[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</option>`).join('');
   document.querySelectorAll('.isel').forEach(s=>{const v=s.value;s.innerHTML=opts;if(v)s.value=v;});
-  const rp=document.getElementById('rpt-pid');if(rp)rp.innerHTML=opts;
+
 }
 
 async function saveProduct(){
@@ -1017,8 +1023,26 @@ function makeRecvPDF(){
   pdfF(doc);doc.save('Ajanta_Receiving_'+today+'.pdf');
 }
 
+function rptSearchShow(){
+  const v = document.getElementById('rpt-search').value.toLowerCase();
+  const ac = document.getElementById('rpt-ac');
+  if(!v){ac.style.display='none';return;}
+  const matches = S.prods.filter(p=>p.item_code?.toLowerCase().includes(v)||p.description?.toLowerCase().includes(v)).slice(0,10);
+  if(!matches.length){ac.style.display='none';return;}
+  ac.innerHTML = matches.map(p=>`<div onclick="rptSelect('${p.id}','${p.item_code} — ${p.description.replace(/'/g,"")}')" style="padding:7px 10px;font-size:11px;cursor:pointer;color:#e2e8f0;border-bottom:1px solid var(--bdr)" onmouseover="this.style.background='#1e3a8a'" onmouseout="this.style.background=''">[${p.item_code}] ${p.description} | Qty:${p.quantity} ${p.unit}</div>`).join('');
+  ac.style.display='block';
+}
+
+function rptSelect(id, label){
+  window._rptSelectedId = id;
+  document.getElementById('rpt-selected').textContent = label;
+  document.getElementById('rpt-search').value = '';
+  document.getElementById('rpt-ac').style.display = 'none';
+}
+
 function makeProdPDF(){
-  const pid=document.getElementById('rpt-pid').value;if(!pid){setMsg('rpt-msg','Select a product!','#fca5a5');return;}
+  const pid = window._rptSelectedId;
+  if(!pid){setMsg('rpt-msg','Search and select a product first!','#fca5a5');return;}
   const p=S.prods.find(x=>x.id===pid);
   const{jsPDF}=window.jspdf;const doc=new jsPDF();const today=new Date().toISOString().split('T')[0];
   pdfH(doc,'Product Report: '+p.description);
