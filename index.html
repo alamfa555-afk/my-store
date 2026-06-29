@@ -650,29 +650,48 @@ async function loadAll(){
 }
 
 function buildAcDataFromProds(){
-  // Always rebuild from actual data so all entries show in dropdown
-  const fields = {
-    item_code: S.prods.map(p=>p.item_code),
-    description: S.prods.map(p=>p.description),
-    invoice_no: S.prods.map(p=>p.invoice_no),
-    equipment_no: S.prods.map(p=>p.equipment_no),
-    supplier_name: S.prods.map(p=>p.supplier_name),
-    location: S.prods.map(p=>p.location),
-    received_by: S.prods.map(p=>p.received_by),
-    receiver_id: S.prods.map(p=>p.receiver_id),
-    receiver_status: S.prods.map(p=>p.receiver_status),
-    issued_to: S.issues.map(i=>i.issues?.issued_to),
-    issued_by: S.issues.map(i=>i.issues?.issued_by),
-    person_id: S.issues.map(i=>i.issues?.person_id),
-    mdr_no: S.issues.map(i=>i.issues?.mdr_no),
-    receiver_contact: S.issues.map(i=>i.issues?.receiver_contact),
+  // Normalize: trim + capitalize first letter of each word for names
+  const norm = (v,isName=false) => {
+    if(!v||!v.trim()) return null;
+    const t = v.trim();
+    if(isName) return t.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ');
+    return t;
   };
-  Object.entries(fields).forEach(([field, values])=>{
-    if(!S.acData[field]) S.acData[field]=[];
-    values.forEach(v=>{
-      if(v && v.trim() && !S.acData[field].includes(v.trim()))
-        S.acData[field].push(v.trim());
+  // Unique case-insensitive
+  const uniq = (arr, isName=false) => {
+    const seen = new Set();
+    const out = [];
+    arr.forEach(v=>{
+      const n = norm(v, isName);
+      if(!n) return;
+      const key = n.toLowerCase();
+      if(!seen.has(key)){seen.add(key);out.push(n);}
     });
+    return out;
+  };
+
+  S.acData['item_code']    = uniq(S.prods.map(p=>p.item_code));
+  S.acData['description']  = uniq(S.prods.map(p=>p.description));
+  S.acData['invoice_no']   = uniq(S.prods.map(p=>p.invoice_no));
+  S.acData['equipment_no'] = uniq(S.prods.map(p=>p.equipment_no));
+  S.acData['supplier_name']= uniq(S.prods.map(p=>p.supplier_name), true);
+  S.acData['location']     = uniq(S.prods.map(p=>p.location));
+  S.acData['received_by']  = uniq(S.prods.map(p=>p.received_by), true);
+  S.acData['receiver_id']  = uniq(S.prods.map(p=>p.receiver_id));
+  S.acData['receiver_status'] = uniq(S.prods.map(p=>p.receiver_status));
+  S.acData['issued_to']    = uniq(S.issues.map(i=>i.issues?.issued_to), true);
+  S.acData['issued_by']    = uniq(S.issues.map(i=>i.issues?.issued_by), true);
+  S.acData['person_id']    = uniq(S.issues.map(i=>i.issues?.person_id));
+  S.acData['mdr_no']       = uniq(S.issues.map(i=>i.issues?.mdr_no));
+  S.acData['receiver_contact'] = uniq(S.issues.map(i=>i.issues?.receiver_contact));
+
+  // Build name->id map for auto-fill
+  window._receiverMap = {};
+  S.prods.forEach(p=>{
+    if(p.received_by && p.receiver_id){
+      const key = p.received_by.trim().toLowerCase();
+      if(!window._receiverMap[key]) window._receiverMap[key] = p.receiver_id;
+    }
   });
 }
 
@@ -696,16 +715,24 @@ function acShow(inp,field,listId){
   list.classList.add('show');
 }
 function acHide(id){setTimeout(()=>{const l=document.getElementById(id);if(l)l.classList.remove('show');},200);}
-function pickAC(inpId,listId,val){document.getElementById(inpId).value=val;acHide(listId);}
+function pickAC(inpId,listId,val){
+  document.getElementById(inpId).value=val;
+  acHide(listId);
+  // Auto-fill receiver ID when name is picked
+  if(inpId==='f-recvby'){
+    setTimeout(autoFillReceiverID, 50);
+  }
+}
 
 function autoFillReceiverID(){
   const name = document.getElementById('f-recvby')?.value.trim();
   if(!name) return;
-  // Find matching receiver_id from existing products
-  const match = S.prods.find(p => p.received_by && p.received_by.toLowerCase() === name.toLowerCase() && p.receiver_id);
-  if(match){
+  const key = name.toLowerCase();
+  const map = window._receiverMap || {};
+  const rid = map[key];
+  if(rid){
     const ridEl = document.getElementById('f-receiver');
-    if(ridEl && !ridEl.value) ridEl.value = match.receiver_id;
+    if(ridEl) ridEl.value = rid;
   }
 }
 
