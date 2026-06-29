@@ -632,7 +632,7 @@ async function loadAll(){
       if(!S.acData[r.field].includes(r.value))S.acData[r.field].push(r.value);
     });
   }
-  renderDash();renderProdTable();renderIssueTable();renderStock('all');renderRecvTable();renderBalance();fillSelects();renderNotifs();
+  renderDash();renderProdTable();renderIssueTable();renderStock('all');renderBalance();fillSelects();renderNotifs();
 }
 
 async function saveAC(field,value){
@@ -786,14 +786,7 @@ function clearReceiving(){
   document.getElementById('recv-items-list').innerHTML='';addRecvRow();
 }
 
-function renderRecvTable(){
-  document.getElementById('recv-tb').innerHTML=S.recvs.length
-    ?S.recvs.map((r,i)=>{
-      const qc=r.quality==='ok'?'<span class="q-ok">✅ OK</span>':r.quality==='damage'?'<span class="q-dmg">⚠️ Damage</span>':'<span class="q-rej">❌ Reject</span>';
-      return`<tr><td>${i+1}</td><td>${r.receiving_date||'—'}</td><td>${r.supplier_name||'—'}</td><td>${r.supplier_contact||'—'}</td><td>${r.invoice_no||'—'}</td><td>${r.description||'—'}</td><td style="color:#4ade80;font-weight:700">+${r.quantity}</td><td>${r.unit||'—'}</td><td>SAR ${(+r.price_per_unit).toFixed(2)}</td><td>SAR ${((+r.price_per_unit)*(+r.quantity)).toFixed(2)}</td><td>${qc}</td><td>${r.received_by||'—'}</td><td>${r.receiver_id||'—'}</td><td>${r.receiver_status||'—'}</td><td>${r.signature_name||'—'}</td><td>${r.remark||'—'}</td></tr>`;
-    }).join('')
-    :'<tr><td colspan="15" style="text-align:center;color:#334155;padding:20px">No receiving records yet</td></tr>';
-}
+
 
 // ═══ PRODUCT ENTRY ═══
 function fillSelects(){
