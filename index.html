@@ -608,8 +608,9 @@ async function initApp(){
   await loadAll();
   await loadSuppliers();
   document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
-  document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];
-  addIRow();addRecvRow();
+  const rvd=document.getElementById('rv-date');if(rvd)rvd.value=new Date().toISOString().split('T')[0];
+  addIRow();
+  if(document.getElementById('recv-items-list'))addRecvRow();
   if(isAdmin)loadUsers();
 }
 
@@ -665,10 +666,10 @@ function autoFillReceiverID(){
 }
 
 function autoFillSupContact(){
+  const supEl=document.getElementById('rv-scon');if(!supEl)return;
   const name=document.getElementById('rv-sup')?.value.trim();if(!name)return;
   const p=S.prods.find(x=>x.supplier_name?.toLowerCase()===name.toLowerCase()&&x.supplier_contact);
-  if(p)document.getElementById('rv-scon').value=p.supplier_contact;
-  else{const r=S.recvs.find(x=>x.supplier_name?.toLowerCase()===name.toLowerCase()&&x.supplier_contact);if(r)document.getElementById('rv-scon').value=r.supplier_contact;}
+  if(p)supEl.value=p.supplier_contact;
 }
 
 // ═══ DASHBOARD ═══
@@ -780,10 +781,16 @@ async function saveReceiving(){
 }
 
 function clearReceiving(){
-  ['rv-sup','rv-scon','rv-inv','rv-by','rv-rid','rv-sign','rv-rem'].forEach(id=>document.getElementById(id).value='');
-  const rvst=document.getElementById('rv-status');if(rvst)rvst.value='';
-  document.getElementById('rv-date').value=new Date().toISOString().split('T')[0];
-  document.getElementById('recv-items-list').innerHTML='';addRecvRow();
+  ['rv-sup','rv-scon','rv-inv','rv-by','rv-rid','rv-sign','rv-rem'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  ['rv-date'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value=new Date().toISOString().split('T')[0];
+  });
+  ['rv-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const ril=document.getElementById('recv-items-list');
+  if(ril){ril.innerHTML='';addRecvRow();}
 }
 
 
@@ -1157,6 +1164,7 @@ function renderSupTable(){
 }
 
 function openSupModal(){
+  if(!document.getElementById('sup-modal')){console.error('sup-modal not found');return;}
   supEditId=null;
   document.getElementById('sup-modal-title').textContent='Add Supplier';
   ['sm-name','sm-person','sm-phone','sm-email','sm-addr','sm-rem'].forEach(id=>document.getElementById(id).value='');
