@@ -287,7 +287,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
     <div class="ct">◆ Add / Edit Product</div>
     <input type="hidden" id="edit-id"/>
     <div class="fg">
-      <div class="fl"><label>Item Code *</label><input id="f-code" placeholder="e.g. ITM-001" oninput="acShow(this,'item_code','ac-code')" onblur="acHide('ac-code')" onfocus="acShow(this,'item_code','ac-code')" onclick="acShow(this,'item_code','ac-code')"/><div class="ac-list" id="ac-code"></div></div>
+      <div class="fl"><label>Item Code *</label><input id="f-code" placeholder="e.g. ITM-001" oninput="acShow(this,'item_code','ac-code');autoFillFromItemCode()" onblur="acHide('ac-code')" onfocus="acShow(this,'item_code','ac-code')" onclick="acShow(this,'item_code','ac-code')"/><div class="ac-list" id="ac-code"></div></div>
       <div class="fl"><label>Invoice No</label><input id="f-invoice" placeholder="INV-2024-001" oninput="acShow(this,'invoice_no','ac-inv')" onblur="acHide('ac-inv')" onfocus="acShow(this,'invoice_no','ac-inv')"/><div class="ac-list" id="ac-inv"></div></div>
       <div class="fl"><label>Description *</label><input id="f-desc" placeholder="Product description" oninput="acShow(this,'description','ac-desc')" onblur="acHide('ac-desc')" onfocus="acShow(this,'description','ac-desc')"/><div class="ac-list" id="ac-desc"></div></div>
       <div class="fl"><label>Unit *</label><select id="f-unit"><option value="">-- Select --</option><option>Pcs</option><option>No.</option><option>Ltr</option><option>Mtr</option><option>Roll</option><option>Box</option><option>Sheet</option><option>Kg</option><option>Ton</option><option>Set</option><option>Other</option></select></div>
@@ -718,10 +718,25 @@ function acHide(id){setTimeout(()=>{const l=document.getElementById(id);if(l)l.c
 function pickAC(inpId,listId,val){
   document.getElementById(inpId).value=val;
   acHide(listId);
-  // Auto-fill receiver ID when name is picked
-  if(inpId==='f-recvby'){
-    setTimeout(autoFillReceiverID, 50);
-  }
+  if(inpId==='f-recvby') setTimeout(autoFillReceiverID, 50);
+  if(inpId==='f-code') setTimeout(autoFillFromItemCode, 50);
+}
+
+function autoFillFromItemCode(){
+  const code = document.getElementById('f-code')?.value.trim();
+  if(!code) return;
+  // Find exact match first, then partial
+  const match = S.prods.find(p=>p.item_code?.toLowerCase()===code.toLowerCase())
+              || S.prods.find(p=>p.item_code?.toLowerCase().startsWith(code.toLowerCase()));
+  if(!match) return;
+  // Auto-fill all fields from matched product
+  if(document.getElementById('f-desc')) document.getElementById('f-desc').value = match.description||'';
+  if(document.getElementById('f-unit')) document.getElementById('f-unit').value = match.unit||'';
+  if(document.getElementById('f-price')) document.getElementById('f-price').value = match.price_per_unit||'';
+  if(document.getElementById('f-sup')) document.getElementById('f-sup').value = match.supplier_name||'';
+  if(document.getElementById('f-eqno')) document.getElementById('f-eqno').value = match.equipment_no||'';
+  if(document.getElementById('f-loc')) document.getElementById('f-loc').value = match.location||'';
+  if(document.getElementById('f-invoice')) document.getElementById('f-invoice').value = match.invoice_no||'';
 }
 
 function autoFillReceiverID(){
