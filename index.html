@@ -332,8 +332,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>MDR No.</label><input id="i-mdr" placeholder="e.g. MDR-2024-001" oninput="acShow(this,'mdr_no','ac-imdr')" onblur="acHide('ac-imdr')" onfocus="acShow(this,'mdr_no','ac-imdr')"/><div class="ac-list" id="ac-imdr"></div></div>
       <div class="fl"><label>Issued To *</label><select id="i-to-type" onchange="toggleIssueTo()" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 10px;color:#fff;font-size:12px;outline:none;width:100%;margin-bottom:4px"><option value="employee">👤 Employee</option><option value="site">🏢 Site</option></select><input id="i-to" placeholder="Employee name / Site name" oninput="acShow(this,'issued_to','ac-ito')" onblur="acHide('ac-ito')" onfocus="acShow(this,'issued_to','ac-ito')"/><div class="ac-list" id="ac-ito"></div></div>
       <div class="fl"><label>Person / Site ID</label><select id="i-pid-type" onchange="togglePID()" style="background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:7px 10px;color:#fff;font-size:12px;outline:none;width:100%;margin-bottom:4px"><option value="employee">Employee No.</option><option value="site">Site No.</option></select><input id="i-pid" placeholder="e.g. EMP-001 or SITE-A" oninput="acShow(this,'person_id','ac-pid')" onblur="acHide('ac-pid')" onfocus="acShow(this,'person_id','ac-pid')"/><div class="ac-list" id="ac-pid"></div></div>
-      <div class="fl"><label>Receiver Contact</label><input id="i-rcon" placeholder="+966 5xx xxx xxxx" oninput="acShow(this,'receiver_contact','ac-ircon')" onblur="acHide('ac-ircon')" onfocus="acShow(this,'receiver_contact','ac-ircon')"/><div class="ac-list" id="ac-ircon"></div></div>
-      <div class="fl"><label>Receiver ID</label><input id="i-rid" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-irid')" onblur="acHide('ac-irid')" onfocus="acShow(this,'receiver_id','ac-irid')"/><div class="ac-list" id="ac-irid"></div></div>
+      <div class="fl"><label>Receiver ID</label><input id="i-rid" placeholder="e.g. EMP-001" oninput="acShow(this,'receiver_id','ac-irid');autoFillIssueContact()" onblur="acHide('ac-irid')" onfocus="acShow(this,'receiver_id','ac-irid')" onclick="acShow(this,'receiver_id','ac-irid')"/><div class="ac-list" id="ac-irid"></div></div>
+      <div class="fl"><label>Receiver Contact</label><input id="i-rcon" placeholder="Auto-fill or type contact" oninput="acShow(this,'receiver_contact','ac-ircon')" onblur="acHide('ac-ircon')" onfocus="acShow(this,'receiver_contact','ac-ircon')"/><div class="ac-list" id="ac-ircon"></div></div>
 
       <div class="fl"><label>Issued By *</label><input id="i-by" placeholder="Issuer full name" oninput="acShow(this,'issued_by','ac-iby')" onblur="acHide('ac-iby')" onfocus="acShow(this,'issued_by','ac-iby')"/><div class="ac-list" id="ac-iby"></div></div>
       <div class="fl"><label>Issuer Title *</label><select id="i-title"><option value="">-- Select --</option><option>Store Keeper</option><option>Supervisor</option><option>Incharge</option><option>Manager</option><option>Asst. Manager</option><option>General Manager</option><option>Director</option><option>Other</option></select></div>
@@ -687,6 +687,17 @@ function buildAcDataFromProds(){
   S.acData['mdr_no']       = uniq(S.issues.map(i=>i.issues?.mdr_no));
   S.acData['receiver_contact'] = uniq(S.issues.map(i=>i.issues?.receiver_contact));
 
+  // Build receiver_id -> contact map for issue auto-fill
+  window._issueContactMap = {};
+  S.issues.forEach(i=>{
+    const rid = i.issues?.receiver_id;
+    const rcon = i.issues?.receiver_contact;
+    if(rid && rcon){
+      const key = rid.trim().toLowerCase();
+      if(!window._issueContactMap[key]) window._issueContactMap[key] = rcon;
+    }
+  });
+
   // Build name->id and name->status map for auto-fill
   window._receiverMap = {};
   window._receiverStatusMap = {};
@@ -725,6 +736,7 @@ function pickAC(inpId,listId,val){
   if(inpId==='f-recvby') setTimeout(autoFillReceiverID, 50);
   if(inpId==='f-code') setTimeout(autoFillFromItemCode, 50);
   if(inpId==='f-sup') setTimeout(autoFillSupplierContact, 50);
+  if(inpId==='i-rid') setTimeout(autoFillIssueContact, 50);
 }
 
 function autoFillFromItemCode(){
@@ -753,6 +765,17 @@ function autoFillSupplierContact(){
   if(sup && sup.phone){
     const conEl = document.getElementById('f-supcon');
     if(conEl) conEl.value = sup.phone;
+  }
+}
+
+function autoFillIssueContact(){
+  const rid = document.getElementById('i-rid')?.value.trim();
+  if(!rid) return;
+  const key = rid.toLowerCase();
+  const contact = (window._issueContactMap||{})[key];
+  if(contact){
+    const conEl = document.getElementById('i-rcon');
+    if(conEl) conEl.value = contact;
   }
 }
 
