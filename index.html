@@ -722,6 +722,7 @@ function pickAC(inpId,listId,val){
   acHide(listId);
   if(inpId==='f-recvby') setTimeout(autoFillReceiverID, 50);
   if(inpId==='f-code') setTimeout(autoFillFromItemCode, 50);
+  if(inpId==='f-sup') setTimeout(autoFillSupplierContact, 50);
 }
 
 function autoFillFromItemCode(){
@@ -744,7 +745,9 @@ function autoFillFromItemCode(){
 function autoFillSupplierContact(){
   const name = document.getElementById('f-sup')?.value.trim();
   if(!name) return;
-  const sup = (S.suppliers||[]).find(s=>s.name?.toLowerCase()===name.toLowerCase());
+  const key = name.toLowerCase();
+  let sup = (S.suppliers||[]).find(s=>s.name?.toLowerCase()===key);
+  if(!sup) sup = (S.suppliers||[]).find(s=>s.name?.toLowerCase().includes(key)||key.includes(s.name?.toLowerCase()));
   if(sup && sup.phone){
     const conEl = document.getElementById('f-supcon');
     if(conEl) conEl.value = sup.phone;
