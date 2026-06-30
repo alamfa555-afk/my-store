@@ -84,6 +84,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font)}
 
 /* BALANCE CARDS */
 .bg3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.bg4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
 .bal-card{border-radius:10px;padding:14px;text-align:center;border:1px solid}
 .bal-card.in{border-color:#065f46;background:#081a10}
 .bal-card.out{border-color:#7f1d1d;background:#1a0808}
@@ -458,7 +459,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 <!-- CHARTS -->
 <div class="panel" id="panel-charts">
   <div class="ph"><h2>📈 Charts & Analytics</h2><p>Stock overview — quantities and values</p></div>
-  <div class="bg3" id="chart-summary"></div>
+  <div class="bg4" id="chart-summary"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
     <div class="card" style="margin:0">
       <div class="ct">◆ Stock Overview (Bar Chart)</div>
@@ -1334,7 +1335,8 @@ function renderCharts(){
   document.getElementById('chart-summary').innerHTML=`
     <div class="bal-card in"><div class="bl">Total Received</div><div class="bv2" style="color:#4ade80;font-size:20px">${totalRecvQty} Units</div><div class="bl">SAR ${totalRecvVal.toFixed(2)}</div></div>
     <div class="bal-card out"><div class="bl">Total Issued</div><div class="bv2" style="color:#fca5a5;font-size:20px">${totalIssueQty} Units</div><div class="bl">SAR ${totalIssueVal.toFixed(2)}</div></div>
-    <div class="bal-card bal"><div class="bl">Damage / Reject</div><div class="bv2" style="color:#fde68a;font-size:20px">${totalDmgQty} Units</div><div class="bl">SAR ${totalDmgVal.toFixed(2)}</div></div>`;
+    <div class="bal-card bal"><div class="bl">Damage / Reject</div><div class="bv2" style="color:#fde68a;font-size:20px">${totalDmgQty} Units</div><div class="bl">SAR ${totalDmgVal.toFixed(2)}</div></div>
+    <div class="bal-card" style="border-color:#1e3a8a;background:#0a1530"><div class="bl">Total Stock (Current)</div><div class="bv2" style="color:#63b3ed;font-size:20px">${currentQty} Units</div><div class="bl">SAR ${currentVal.toFixed(2)}</div></div>`;
 
   // BAR CHART - Qty comparison
   destroyChart('chart-bar');
