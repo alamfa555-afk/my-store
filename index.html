@@ -295,7 +295,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
       <div class="fl"><label>Quantity *</label><input id="f-qty" type="number" placeholder="0" min="0"/></div>
       <div class="fl"><label>Price/Unit (SAR)</label><input id="f-price" type="number" placeholder="0.00" min="0" step="0.01"/></div>
       <div class="fl"><label>Equipment / Property No.</label><input id="f-eqno" placeholder="e.g. EQ-2024-001" oninput="acShow(this,'equipment_no','ac-eq')" onblur="acHide('ac-eq')" onfocus="acShow(this,'equipment_no','ac-eq')"/><div class="ac-list" id="ac-eq"></div></div>
-      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" oninput="acShow(this,'supplier_name','ac-sup')" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')" onclick="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
+      <div class="fl"><label>Supplier Name</label><input id="f-sup" placeholder="Supplier company" oninput="acShow(this,'supplier_name','ac-sup');autoFillSupplierContact()" onblur="acHide('ac-sup')" onfocus="acShow(this,'supplier_name','ac-sup')" onclick="acShow(this,'supplier_name','ac-sup')"/><div class="ac-list" id="ac-sup"></div></div>
+      <div class="fl"><label>Supplier Contact</label><input id="f-supcon" placeholder="Auto-fill or type contact"/></div>
 
       <div class="fl"><label>Received By</label><input id="f-recvby" placeholder="Full name" oninput="acShow(this,'received_by','ac-recvby');autoFillReceiverID()" onblur="acHide('ac-recvby')" onfocus="acShow(this,'received_by','ac-recvby')" onclick="acShow(this,'received_by','ac-recvby')"/><div class="ac-list" id="ac-recvby"></div></div>
       <div class="fl"><label>Receiver ID No.</label><input id="f-receiver" placeholder="Auto-fill or type ID" oninput="acShow(this,'receiver_id','ac-rid')" onblur="acHide('ac-rid')" onfocus="acShow(this,'receiver_id','ac-rid')" onclick="acShow(this,'receiver_id','ac-rid')"/><div class="ac-list" id="ac-rid"></div></div>
@@ -364,14 +365,19 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 <!-- STOCK VIEW -->
 <div class="panel" id="panel-stock">
   <div class="ph"><h2>🗃️ Stock View</h2><p>Complete store stock</p></div>
-  <div class="br" style="margin-bottom:10px">
-    <button class="btn bp bsm" onclick="renderStock('all')">All Stock</button>
-    <button class="btn bs bsm" onclick="renderStock('ok')">In Stock</button>
-    <button class="btn bo bsm" onclick="renderStock('low')">Low Stock</button>
-    <button class="btn bd bsm" onclick="renderStock('out')">No Stock</button>
-    <button class="btn bv bsm" onclick="renderStock('dmg')">Damage/Reject</button>
-    <button class="btn bg2 bsm" onclick="exportStockCSV()">⬇ CSV</button>
-    <button class="btn bv bsm" onclick="makePDF('stock')">⬇ PDF</button>
+  <div style="margin-bottom:10px">
+    <input type="search" id="stock-search" placeholder="🔍 Search by Item Code or Description..." 
+      oninput="renderStock(window._stockFilter||'all')" 
+      style="width:100%;background:#080e1e;border:1px solid var(--bdr);border-radius:7px;padding:9px 14px;color:#fff;font-size:13px;outline:none;margin-bottom:10px"/>
+    <div class="br" style="margin:0">
+      <button class="btn bp bsm" onclick="renderStock('all')">All Stock</button>
+      <button class="btn bs bsm" onclick="renderStock('ok')">In Stock</button>
+      <button class="btn bo bsm" onclick="renderStock('low')">Low Stock</button>
+      <button class="btn bd bsm" onclick="renderStock('out')">No Stock</button>
+      <button class="btn bv bsm" onclick="renderStock('dmg')">Damage/Reject</button>
+      <button class="btn bg2 bsm" onclick="exportStockCSV()">⬇ CSV</button>
+      <button class="btn bv bsm" onclick="makePDF('stock')">⬇ PDF</button>
+    </div>
   </div>
   <div class="card">
     <div class="ct" id="stock-title">◆ All Stock</div>
@@ -443,14 +449,14 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 
 <!-- SUPPLIERS -->
 <div class="panel" id="panel-suppliers">
-  <div class="ph"><div><h2>🏭 Supplier Database</h2><p>All suppliers contact list</p></div>
+  <div class="ph"><div><h2>🏭 Supplier Database</h2><p>Supplier names & contacts — for quick fetch</p></div>
     <button class="btn ba bsm" onclick="openSupModal()">+ Add Supplier</button>
   </div>
   <div class="card">
     <div class="ct">◆ Search Suppliers</div>
     <input type="search" id="sup-search" placeholder="Search by name or contact..." oninput="renderSupTable()" style="width:100%;background:#080e1e;border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;color:#fff;font-size:12px;outline:none;margin-bottom:12px"/>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Company Name</th><th>Contact Person</th><th>Phone</th><th>Email</th><th>Address</th><th>Category</th><th>Remark</th><th>Action</th></tr></thead>
+      <thead><tr><th>#</th><th>Supplier Name</th><th>Contact No.</th><th>Action</th></tr></thead>
       <tbody id="sup-tb"></tbody>
     </table></div>
   </div>
@@ -512,16 +518,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 
 <!-- SUPPLIER MODAL -->
 <div class="modal-ov" id="sup-modal">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:400px">
     <h3 id="sup-modal-title" style="font-size:15px;font-weight:800;margin-bottom:16px;color:#fff">Add Supplier</h3>
     <div class="fg">
-      <div class="fl full"><label>Company Name *</label><input id="sm-name" placeholder="Supplier company name"/></div>
-      <div class="fl"><label>Contact Person</label><input id="sm-person" placeholder="Person name"/></div>
-      <div class="fl"><label>Phone *</label><input id="sm-phone" placeholder="+966 5xx xxx xxxx"/></div>
-      <div class="fl"><label>Email</label><input id="sm-email" placeholder="email@company.com"/></div>
-      <div class="fl"><label>Category</label><select id="sm-cat"><option value="">-- Select --</option><option>Electronics</option><option>Construction</option><option>Tools & Equipment</option><option>Plumbing</option><option>Electrical</option><option>Chemicals</option><option>Hardware</option><option>Other</option></select></div>
-      <div class="fl"><label>Address</label><input id="sm-addr" placeholder="City / Address"/></div>
-      <div class="fl full"><label>Remark</label><input id="sm-rem" placeholder="Any notes"/></div>
+      <div class="fl full"><label>Supplier Name *</label><input id="sm-name" placeholder="Supplier company name"/></div>
+      <div class="fl full"><label>Contact No. *</label><input id="sm-phone" placeholder="+966 5xx xxx xxxx"/></div>
     </div>
     <div class="modal-actions">
       <button class="btn bd" onclick="closeSupModal()">Cancel</button>
@@ -740,6 +741,16 @@ function autoFillFromItemCode(){
   if(document.getElementById('f-invoice')) document.getElementById('f-invoice').value = match.invoice_no||'';
 }
 
+function autoFillSupplierContact(){
+  const name = document.getElementById('f-sup')?.value.trim();
+  if(!name) return;
+  const sup = (S.suppliers||[]).find(s=>s.name?.toLowerCase()===name.toLowerCase());
+  if(sup && sup.phone){
+    const conEl = document.getElementById('f-supcon');
+    if(conEl) conEl.value = sup.phone;
+  }
+}
+
 function autoFillReceiverID(){
   const name = document.getElementById('f-recvby')?.value.trim();
   if(!name) return;
@@ -893,17 +904,24 @@ async function saveProduct(){
   const code=document.getElementById('f-code').value.trim(),desc=document.getElementById('f-desc').value.trim(),unit=document.getElementById('f-unit').value;
   if(!code||!desc||!unit){setMsg('pmsg','Item Code, Description and Unit are required!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,equipment_no:document.getElementById('f-eqno').value.trim()||null,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,last_purchase:document.getElementById('f-date').value||null,received_by:document.getElementById('f-recvby').value.trim()||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,receiver_status:document.getElementById('f-rstatus').value||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
+  const supplierContact=document.getElementById('f-supcon').value.trim()||null;
+  const obj={item_code:code,invoice_no:document.getElementById('f-invoice').value.trim()||null,description:desc,unit,price_per_unit:parseFloat(document.getElementById('f-price').value)||0,quantity:parseFloat(document.getElementById('f-qty').value)||0,equipment_no:document.getElementById('f-eqno').value.trim()||null,location:document.getElementById('f-loc').value.trim()||null,supplier_name:document.getElementById('f-sup').value.trim()||null,supplier_contact:supplierContact,last_purchase:document.getElementById('f-date').value||null,received_by:document.getElementById('f-recvby').value.trim()||null,receiver_id:document.getElementById('f-receiver').value.trim()||null,receiver_status:document.getElementById('f-rstatus').value||null,status:document.getElementById('f-status').value||'ok',remark:document.getElementById('f-rem').value.trim()||null};
   const eid=document.getElementById('edit-id').value;
   let res;
   if(eid)res=await db(`/rest/v1/products?id=eq.${eid}`,'PATCH',obj,tok);
   else{const ex=S.prods.find(p=>p.item_code===code);if(ex)res=await db(`/rest/v1/products?id=eq.${ex.id}`,'PATCH',obj,tok);else res=await db('/rest/v1/products','POST',obj,tok);}
   if(!res.ok){setMsg('pmsg','Error saving product','#fca5a5');return;}
-  await Promise.all([saveAC('item_code',code),saveAC('description',desc),saveAC('invoice_no',obj.invoice_no),saveAC('equipment_no',obj.equipment_no),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('receiver_id',obj.receiver_id),saveAC('received_by',obj.received_by),saveAC('received_by',obj.received_by)]);
+  await Promise.all([saveAC('item_code',code),saveAC('description',desc),saveAC('invoice_no',obj.invoice_no),saveAC('equipment_no',obj.equipment_no),saveAC('location',obj.location),saveAC('supplier_name',obj.supplier_name),saveAC('receiver_id',obj.receiver_id),saveAC('received_by',obj.received_by)]);
+  if(obj.supplier_name){
+    const exists=(S.suppliers||[]).find(s=>s.name?.toLowerCase()===obj.supplier_name.toLowerCase());
+    if(!exists) await db('/rest/v1/suppliers','POST',{name:obj.supplier_name,phone:supplierContact||null},tok);
+    else if(supplierContact && !exists.phone) await db(`/rest/v1/suppliers?id=eq.${exists.id}`,'PATCH',{phone:supplierContact},tok);
+    await loadSuppliers();
+  }
   setMsg('pmsg','✅ Product saved!','#4ade80');clearProd();await loadAll();buildAcDataFromProds();
 }
 
-function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-recvby','f-receiver','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');
+function clearProd(){['f-code','f-invoice','f-desc','f-qty','f-price','f-eqno','f-sup','f-supcon','f-recvby','f-receiver','f-loc','f-rem'].forEach(id=>document.getElementById(id).value='');
   const fd=document.getElementById('f-date');if(fd)fd.value=new Date().toISOString().split('T')[0];document.getElementById('f-unit').value='';document.getElementById('f-status').value='ok';document.getElementById('f-rstatus').value='';document.getElementById('edit-id').value='';}
 
 function renderProdTable(){
@@ -920,7 +938,7 @@ function renderProdTable(){
     :'<tr><td colspan="17" style="text-align:center;color:#334155;padding:20px">No products found</td></tr>';
 }
 
-function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-recvby').value=p.received_by||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-rstatus').value=p.receiver_status||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('products',null);window.scrollTo(0,0);}
+function editP(id){const p=S.prods.find(x=>x.id===id);if(!p)return;document.getElementById('edit-id').value=p.id;document.getElementById('f-code').value=p.item_code;document.getElementById('f-invoice').value=p.invoice_no||'';document.getElementById('f-desc').value=p.description;document.getElementById('f-unit').value=p.unit;document.getElementById('f-price').value=p.price_per_unit;document.getElementById('f-qty').value=p.quantity;document.getElementById('f-eqno').value=p.equipment_no||'';document.getElementById('f-sup').value=p.supplier_name||'';document.getElementById('f-supcon').value=p.supplier_contact||'';document.getElementById('f-date').value=p.last_purchase||'';document.getElementById('f-recvby').value=p.received_by||'';document.getElementById('f-receiver').value=p.receiver_id||'';document.getElementById('f-rstatus').value=p.receiver_status||'';document.getElementById('f-loc').value=p.location||'';document.getElementById('f-status').value=p.status||'ok';document.getElementById('f-rem').value=p.remark||'';showPanel('products',null);window.scrollTo(0,0);}
 
 async function delP(id){if(!confirm('Delete this product?'))return;await db(`/rest/v1/products?id=eq.${id}`,'DELETE',null,S.session?.access_token);await loadAll();}
 
@@ -993,6 +1011,7 @@ function renderIssueTable(){
 
 // ═══ STOCK VIEW ═══
 function renderStock(filter){
+  window._stockFilter = filter;
   const titles={all:'All Stock',ok:'In Stock',low:'Low Stock',out:'No Stock',dmg:'Damage/Reject'};
   document.getElementById('stock-title').textContent='◆ '+titles[filter];
   let d=S.prods;
@@ -1000,6 +1019,11 @@ function renderStock(filter){
   else if(filter==='low')d=d.filter(p=>+p.quantity>0&&+p.quantity<=10);
   else if(filter==='out')d=d.filter(p=>+p.quantity<=0);
   else if(filter==='dmg')d=d.filter(p=>p.status==='damage'||p.status==='reject');
+  // Apply search filter
+  const search = document.getElementById('stock-search')?.value.toLowerCase().trim();
+  if(search){
+    d = d.filter(p => p.item_code?.toLowerCase().includes(search) || p.description?.toLowerCase().includes(search));
+  }
   document.getElementById('stk-tb').innerHTML=d.length
     ?d.map((p,i)=>`<tr>
       <td>${i+1}</td><td><b>${p.item_code}</b></td><td>${p.equipment_no||'—'}</td><td>${p.invoice_no||'—'}</td><td>${p.description}</td><td>${p.unit}</td>
@@ -1257,25 +1281,23 @@ async function loadSuppliers(){
 function renderSupTable(){
   const search = document.getElementById('sup-search')?.value.toLowerCase()||'';
   const data = (S.suppliers||[]).filter(s=>
-    !search || s.name?.toLowerCase().includes(search) || s.phone?.toLowerCase().includes(search) || s.contact_person?.toLowerCase().includes(search)
+    !search || s.name?.toLowerCase().includes(search) || s.phone?.toLowerCase().includes(search)
   );
   const canEdit = ['admin','user'].includes(S.profile?.role);
   document.getElementById('sup-tb').innerHTML = data.length
     ? data.map((s,i)=>`<tr>
-        <td>${i+1}</td><td><b>${s.name||'—'}</b></td><td>${s.contact_person||'—'}</td>
-        <td style="color:#4ade80">${s.phone||'—'}</td><td>${s.email||'—'}</td>
-        <td>${s.address||'—'}</td><td>${s.category||'—'}</td><td>${s.remark||'—'}</td>
+        <td>${i+1}</td><td><b>${s.name||'—'}</b></td>
+        <td style="color:#4ade80;font-weight:700">${s.phone||'—'}</td>
         <td>${canEdit?`<button class="btn bp bsm" onclick="editSup('${s.id}')">✏️</button> <button class="btn bd bsm" onclick="delSup('${s.id}')">🗑️</button>`:'—'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="9" style="text-align:center;color:#334155;padding:20px">No suppliers found</td></tr>';
+    : '<tr><td colspan="4" style="text-align:center;color:#334155;padding:20px">No suppliers found</td></tr>';
 }
 
 function openSupModal(){
   if(!document.getElementById('sup-modal')){console.error('sup-modal not found');return;}
   supEditId=null;
   document.getElementById('sup-modal-title').textContent='Add Supplier';
-  ['sm-name','sm-person','sm-phone','sm-email','sm-addr','sm-rem'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('sm-cat').value='';
+  ['sm-name','sm-phone'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('sup-modal').classList.add('open');
 }
 
@@ -1287,21 +1309,16 @@ function editSup(id){
   supEditId=id;
   document.getElementById('sup-modal-title').textContent='Edit Supplier';
   document.getElementById('sm-name').value=s.name||'';
-  document.getElementById('sm-person').value=s.contact_person||'';
   document.getElementById('sm-phone').value=s.phone||'';
-  document.getElementById('sm-email').value=s.email||'';
-  document.getElementById('sm-cat').value=s.category||'';
-  document.getElementById('sm-addr').value=s.address||'';
-  document.getElementById('sm-rem').value=s.remark||'';
   document.getElementById('sup-modal').classList.add('open');
 }
 
 async function saveSupplier(){
   const name=document.getElementById('sm-name').value.trim();
   const phone=document.getElementById('sm-phone').value.trim();
-  if(!name){setMsg('sup-msg','Company name is required!','#fca5a5');return;}
+  if(!name||!phone){setMsg('sup-msg','Name and Contact No. are required!','#fca5a5');return;}
   const tok=S.session?.access_token;
-  const obj={name,contact_person:document.getElementById('sm-person').value.trim()||null,phone:phone||null,email:document.getElementById('sm-email').value.trim()||null,category:document.getElementById('sm-cat').value||null,address:document.getElementById('sm-addr').value.trim()||null,remark:document.getElementById('sm-rem').value.trim()||null};
+  const obj={name,phone};
   let res;
   if(supEditId) res=await db(`/rest/v1/suppliers?id=eq.${supEditId}`,'PATCH',obj,tok);
   else res=await db('/rest/v1/suppliers','POST',obj,tok);
